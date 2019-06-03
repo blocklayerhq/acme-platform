@@ -1,5 +1,5 @@
 
-Source code was forked with `git clone git@github.com:atulmy/crate.git crate`
+Source code was forked with `git clone git@github.com/atulmy/crate.git crate`
 
 
 MySQL database must be manually created. In dev environment:
