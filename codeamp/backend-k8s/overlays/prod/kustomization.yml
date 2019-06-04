@@ -1,0 +1,16 @@
+bases:
+  - ../../base
+patches:
+  - patch-deployment.yml
+configMapGenerator:
+  - name: circuit-configmap
+    behavior: replace
+    files:
+      - dex.yml
+patchesJson6902:
+  - target:
+      group: extensions
+      version: v1beta1
+      kind: Ingress
+      name: circuit
+    path: patch-ingress.yml

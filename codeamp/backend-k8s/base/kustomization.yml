@@ -1,0 +1,8 @@
+resources:
+  - circuit-deployment.yml
+  - circuit-ingress.yml
+  - circuit-service.yml
+configMapGenerator:
+  - name: circuit-configmap
+    files:
+      - dex.yml

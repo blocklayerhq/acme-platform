@@ -1,0 +1,20 @@
+- op: replace
+  path: /metadata/annotations
+  value:
+    kubernetes.io/ingress.global-static-ip-name: codeamp-prod
+    certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+    certmanager.k8s.io/acme-http01-edit-in-place: "true"
+
+- op: replace
+  path: /spec/tls/0/hosts
+  value:
+    - circuit-dex.prod.codeamp-gke.infralabs.io
+    - circuit.prod.codeamp-gke.infralabs.io
+
+- op: replace
+  path: /spec/rules/0/host
+  value: circuit-dex.prod.codeamp-gke.infralabs.io
+
+- op: replace
+  path: /spec/rules/1/host
+  value: circuit.prod.codeamp-gke.infralabs.io

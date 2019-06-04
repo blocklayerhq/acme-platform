@@ -1,0 +1,32 @@
+issuer: https://circuit-dex.staging.codeamp-gke.infralabs.io/dex
+storage:
+  type: postgres
+  config:
+    host: $CODEAMP_DEX_POSTGRES_HOST
+    database: $CODEAMP_DEX_POSTGRES_DBNAME
+    user: $CODEAMP_DEX_POSTGRES_USER
+    password: $CODEAMP_DEX_POSTGRES_PASSWORD
+    ssl:
+      mode: disable
+frontend:
+  dir: ./bootstrap/dex/web
+  theme: coreos
+web:
+  http: 0.0.0.0:5556
+  allowedOrigins: ["*"]
+logger:
+  level: "debug"
+  format: "text" # can also be "json"
+oauth2:
+  responseTypes: ["code", "token", "id_token"]
+staticClients:
+  - id: example-app
+    redirectURIs:
+      - "https://staging.codeamp-gke.infralabs.io/login/callback"
+    name: "Development"
+    secret: ZXhhbXBsZS1hcHAtc2VjcmV0
+connectors:
+  - type: mockCallback
+    id: mock
+    name: Example
+enablePasswordDB: false

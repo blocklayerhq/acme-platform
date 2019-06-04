@@ -1,0 +1,79 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: circuit
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: circuit
+    spec:
+      containers:
+        - image: gcr.io/deploy-test-231020/circuit:base
+          name: circuit
+          command: ["reflex", "-c", "reflex.conf"]
+          ports:
+            - name: circuit-port
+              containerPort: 3011
+          env:
+            - name: CODEAMP_PLUGINS_CODEAMP_POSTGRES_HOST
+              value: 10.32.224.6
+            - name: CODEAMP_PLUGINS_CODEAMP_POSTGRES_DBNAME
+              valueFrom: { secretKeyRef: { name: db-circuit, key: dbname } }
+            - name: CODEAMP_PLUGINS_CODEAMP_POSTGRES_USER
+              valueFrom: { secretKeyRef: { name: db-circuit, key: user } }
+            - name: CODEAMP_PLUGINS_CODEAMP_POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: db-circuit, key: passwd } }
+            - name: CODEAMP_REDIS_SERVER
+              value: 10.0.16.3:6379
+            - name: CODEAMP_PLUGINS_CODEAMP_OIDC_URI
+              value: https://circuit-dex.staging.codeamp-gke.infralabs.io/dex
+        - image: gcr.io/deploy-test-231020/circuit:base
+          name: circuit-dex
+          command: ["/usr/local/bin/dex", "serve", "/circuit-config/dex.yml"]
+          ports:
+            - name: dex-port
+              containerPort: 5556
+          readinessProbe:
+            httpGet:
+              path: /dex/healthz
+              port: dex-port
+          volumeMounts:
+            - name: config-volume
+              mountPath: /circuit-config
+          env:
+            - name: CODEAMP_DEX_POSTGRES_HOST
+              value: 10.32.224.6
+            - name: CODEAMP_DEX_POSTGRES_DBNAME
+              valueFrom: { secretKeyRef: { name: db-dex, key: dbname } }
+            - name: CODEAMP_DEX_POSTGRES_USER
+              valueFrom: { secretKeyRef: { name: db-dex, key: user } }
+            - name: CODEAMP_DEX_POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: db-dex, key: passwd } }
+      initContainers:
+        - name: circuit-init
+          image: gcr.io/deploy-test-231020/circuit:base
+          command:
+            [
+              "sh",
+              "-c",
+              "go run main.go migrate --config ./configs/circuit.yml",
+            ]
+          env:
+            - name: CODEAMP_PLUGINS_CODEAMP_POSTGRES_HOST
+              value: 10.32.224.6
+            - name: CODEAMP_PLUGINS_CODEAMP_POSTGRES_DBNAME
+              valueFrom: { secretKeyRef: { name: db-circuit, key: dbname } }
+            - name: CODEAMP_PLUGINS_CODEAMP_POSTGRES_USER
+              valueFrom: { secretKeyRef: { name: db-circuit, key: user } }
+            - name: CODEAMP_PLUGINS_CODEAMP_POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: db-circuit, key: passwd } }
+            - name: CODEAMP_REDIS_SERVER
+              value: 10.0.16.3:6379
+
+      volumes:
+        - name: config-volume
+          configMap:
+            name: circuit-configmap
