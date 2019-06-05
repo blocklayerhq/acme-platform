@@ -8,8 +8,28 @@ run fs subtree web {
     path = "code/web"
 }
 
-run npm build web {
+run fs write_text web_node_env {
     src = fs.subtree.web.tree
+    path = ".env"
+    text = "NODE_ENV=production"
+}
+
+run fs write_text web_self_url {
+    src = fs.write_text.web_node_env.tree
+    path = ".env"
+    text = "APP_URL=https://<OVERRIDE REQUIRED>"
+    append = "yes"
+}
+
+run fs write_text web_api_url {
+    src = fs.write_text.web_self_url.tree
+    path = ".env"
+    text = "APP_URL_API=https://<OVERRIDE REQUIRED>"
+    append = "yes"
+}
+
+run npm build web {
+    src = fs.write_text.web_api_url.tree
     build_script = "build:client"
     build_dir = "public"
 }
