@@ -1,4 +1,20 @@
 
+## TODO
+
+- Fix direct links (netlify redirects for client-side history / pushstate)
+- Merge codeamp backend
+- Currently only builds with local web src override: fix that!
+	- API changes:
+		- code/api/.env					TODO
+		- code/api/src/config/database.json		TODO
+	- WEB changes:
+		- code/web/.env					TODO
+		- code/web/package.json				NOP (dependency for netlify function, not needed)
+		- code/web/src/index.js				NOP (patch for netlify function, not needed)
+
+
+
+
 Source code was forked with `git clone git@github.com/atulmy/crate.git crate`
 
 
