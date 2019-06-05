@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [ -z "$2" ]; then
+	branch=master
+else
+	branch="job-$2"
+fi
+
+if [ -z "$1" ]; then
+	ref="$branch"^{tree}
+else
+	ref="$branch":"$1"
+fi
+
+
+git --git-dir ~/.bl/state/.git cat-file -p "$ref"
