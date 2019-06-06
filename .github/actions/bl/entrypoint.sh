@@ -2,4 +2,4 @@
 
 set -ex
 
-bl line run $BL_PIPELINE -o $BL_INPUT_OVERRIDE=$GITHUB_SHA
+bl line run $BL_PIPELINE -o npm.build.web.src=@./crate/code/web/
