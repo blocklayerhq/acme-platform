@@ -1,0 +1,96 @@
+
+
+///
+/// CODEAMP BACKEND
+///
+
+run git clone backend {
+    src = "https://github.com/codeamp/circuit.git"
+}
+
+run fs write_text enforce_standard_dockerfile  {
+    src = git.clone.backend.tree
+    path = "Dockerfile"
+    text = <<-EOF
+	from nginx
+EOF
+}
+
+
+run docker build backend {
+    src = fs.write_text.enforce_standard_dockerfile.tree
+}
+
+run gcr push backend {
+    image = docker.build.backend.image
+    name = "circuit"
+    tag = git.clone.backend.commit
+    project = "<OVERRIDE REQUIRED>"
+    service-key = "<OVERRIDE REQUIRED>"
+}
+
+run fs empty_tree _ {}
+
+run kubernetes kustomize backend {
+    src = fs.empty_tree._.tree # OVERRIDE REQUIRED
+    build-path = "overlays/staging"
+    image = gcr.push.backend.full-name
+}
+
+run gke deploy backend {
+    src = kubernetes.kustomize.backend.tree
+    project = "OVERRIDE REQUIRED"
+    service-key = "OVERRIDE REQUIRED"
+    kubernetes-cluster = "OVERRIDE REQUIRED"
+    region = "OVERRIDE REQUIRED"
+    namespace = "OVERRIDE REQUIRED"
+}
+
+///
+/// ACME CLOTHING STORE BACKEND
+///
+
+run git clone apprepo {
+    src = "https://github.com/atulmy/crate"
+}
+
+run fs subtree web {
+    src = git.clone.apprepo.tree
+    path = "code/web"
+}
+
+run fs write_text web_node_env {
+    src = fs.subtree.web.tree
+    path = ".env"
+    text = "NODE_ENV=production"
+}
+
+run fs write_text web_self_url {
+    src = fs.write_text.web_node_env.tree
+    path = ".env"
+    text = "APP_URL=https://<OVERRIDE REQUIRED>"
+    append = "yes"
+}
+
+run fs write_text web_api_url {
+    src = fs.write_text.web_self_url.tree
+    path = ".env"
+    text = "APP_URL_API=https://<OVERRIDE REQUIRED>"
+    append = "yes"
+}
+
+run npm build web {
+    src = fs.write_text.web_api_url.tree
+    build_script = "build:client"
+    build_dir = "public"
+}
+
+run netlify deploy web {
+    src = npm.build.web.tree
+    site-id = "OVERRIDE REQUIRED"
+    auth-token = "OVERRIDE REQUIRED"
+}
+
+// outputs {
+//     deploy_logs = netlify.deploy.web._stdout
+// }
