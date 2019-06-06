@@ -1,4 +1,46 @@
 
+
+///
+/// CODEAMP BACKEND
+///
+
+run git clone backend {
+    src = "https://github.com/codeamp/circuit.git"
+}
+
+run docker build backend {
+    src = git.clone.backend.tree
+}
+
+run gcr push backend {
+    image = docker.build.backend.image
+    name = "circuit"
+    tag = git.clone.backend.commit
+    project = "<OVERRIDE REQUIRED>"
+    service-key = "<OVERRIDE REQUIRED>"
+}
+
+run fs empty_tree _ {}
+
+run kubernetes kustomize backend {
+    src = fs.empty_tree._.tree # OVERRIDE REQUIRED
+    build-path = "overlays/staging"
+    image = gcr.push.backend.full-name
+}
+
+run gke deploy backend {
+    src = kubernetes.kustomize.backend.tree
+    project = "OVERRIDE REQUIRED"
+    service-key = "OVERRIDE REQUIRED"
+    kubernetes-cluster = "OVERRIDE REQUIRED"
+    region = "OVERRIDE REQUIRED"
+    namespace = "OVERRIDE REQUIRED"
+}
+
+///
+/// ACME CLOTHING STORE BACKEND
+///
+
 run git clone apprepo {
     src = "https://github.com/atulmy/crate"
 }
