@@ -7,7 +7,7 @@ if [ -z "$1" ]; then
 	exit 1
 fi
 
-. overrides.microstaging.secret
+. .overrides.microstaging.secret
 
 if [ "$LOCAL" ]; then
 	echo "---> Building from local repositories"
