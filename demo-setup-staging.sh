@@ -10,5 +10,5 @@ OVERRIDES=()
 . overrides.staging.secret
 
 bl line rm acme-clothing-staging || true
-bl line create acme-clothing-staging -f ./acme-clothing.pipeline
+bl line create acme-clothing-staging -f ./acme-clothing.pipeline -d "ACME Staging Pipeline"
 bl line run -d acme-clothing-staging "${OVERRIDES[@]}"
