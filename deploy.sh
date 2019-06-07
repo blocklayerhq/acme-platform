@@ -12,7 +12,7 @@ fi
 if [ "$LOCAL" ]; then
 	echo "---> Building from local repositories"
 	OVERRIDES+=(
-		-o npm.build.web.src=@./crate/code/web/
+		-o fs.write_text.web_node_env.src=@./crate/code/web/
 	)
 else
 	echo "---> Building from upstream repositories"
