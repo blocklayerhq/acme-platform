@@ -15,6 +15,6 @@ action "bl-run" {
   env = {
     BL_PIPELINE = "acme-clothing-staging"
     BL_INPUT_OVERRIDE = "git.clone.web.ref"
-    BL_API_SERVER = "http://api.infralabs.io:8080/query"
+    BL_API_SERVER = "http://demo.infralabs.io:8080/query"
   }
 }
