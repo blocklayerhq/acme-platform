@@ -130,7 +130,7 @@ task build_frontend {
     build_dir = "public"
 }
 
-input netlify_site_id {
+input netlify_site {
     type = "string"
 }
 
@@ -141,6 +141,6 @@ input netlify_auth_token {
 task deploy_frontend {
     op = "netlify.deploy"
     src = build_frontend.tree
-    site-id = input.netlify_site_id
+    name = input.netlify_site
     auth-token = input.netlify_auth_token
 }
