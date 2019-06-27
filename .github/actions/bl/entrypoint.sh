@@ -2,4 +2,4 @@
 
 set -ex
 
-bl line run $BL_PIPELINE -o fs.write_text.web_node_env.src=@./crate/code/web/
+bl line run acme-clothing-staging -o frontend_src=@./crate/code/web/

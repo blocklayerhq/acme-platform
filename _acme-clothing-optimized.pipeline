@@ -1,96 +1,155 @@
-
-
 ///
 /// CODEAMP BACKEND
 ///
 
-run git clone backend {
+input backend_src {
+    type = "fstree"
+    value = fetch_backend.tree
+}
+
+task fetch_backend {
+    op = "git.clone"
     src = "https://github.com/codeamp/circuit.git"
 }
 
-run fs write_text enforce_standard_dockerfile  {
-    src = git.clone.backend.tree
+task enforce_standard_dockerfile  {
+    op = "fs.write_text"
+    src = input.backend_src
     path = "Dockerfile"
     text = <<-EOF
 	from nginx
 EOF
 }
 
-
-run docker build backend {
-    src = fs.write_text.enforce_standard_dockerfile.tree
+task build_backend {
+    op = "docker.build"
+    src = enforce_standard_dockerfile.tree
 }
 
-run gcr push backend {
-    image = docker.build.backend.image
+input gcp_service_key {
+    type = "string"
+}
+
+input gcp_project {
+    type = "string"
+    value = "deploy-test-231020"
+}
+
+input gcp_region {
+    type = "string"
+    value = "us-west2"
+}
+
+task push_backend {
+    op = "gcr.push"
+    image = build_backend.image
     name = "circuit"
-    tag = git.clone.backend.commit
-    project = "<OVERRIDE REQUIRED>"
-    service-key = "<OVERRIDE REQUIRED>"
+    # FIXME: Since we're building from an input, we shouldn't use the task's git
+    # commit as a tag
+    tag = fetch_backend.commit
+    project = input.gcp_project
+    service-key = input.gcp_service_key
 }
 
-run fs empty_tree _ {}
+input kubernetes_specs {
+    type = "fstree"
+}
 
-run kubernetes kustomize backend {
-    src = fs.empty_tree._.tree # OVERRIDE REQUIRED
+task templatize_backend {
+    op = "kubernetes.kustomize"
+    src = input.kubernetes_specs
     build-path = "overlays/staging"
-    image = gcr.push.backend.full-name
+    image = push_backend.full-name
 }
 
-run gke deploy backend {
-    src = kubernetes.kustomize.backend.tree
-    project = "OVERRIDE REQUIRED"
-    service-key = "OVERRIDE REQUIRED"
-    kubernetes-cluster = "OVERRIDE REQUIRED"
-    region = "OVERRIDE REQUIRED"
-    namespace = "OVERRIDE REQUIRED"
+input kubernetes_namespace {
+    type = "string"
+}
+
+input kubernetes_cluster {
+    type = "string"
+    value = "cluster"
+}
+
+task deploy_backend {
+    op = "gke.deploy"
+    src = templatize_backend.tree
+    project = input.gcp_project
+    service-key = input.gcp_service_key
+    kubernetes-cluster = input.kubernetes_cluster
+    region = input.gcp_region
+    namespace = input.kubernetes_namespace
 }
 
 ///
-/// ACME CLOTHING STORE BACKEND
+/// ACME CLOTHING STORE FRONTEND
 ///
 
-run git clone apprepo {
+input frontend_src {
+    type = "fstree"
+    value = cd_frontend.tree
+}
+
+task fetch_frontend {
+    op = "git.clone"
     src = "https://github.com/atulmy/crate"
 }
 
-run fs subtree web {
-    src = git.clone.apprepo.tree
+task cd_frontend {
+    op = "fs.subtree"
+    src = fetch_frontend.tree
     path = "code/web"
 }
 
-run fs write_text web_node_env {
-    src = fs.subtree.web.tree
+task add_web_node_env {
+    op = "fs.write_text"
+    src = input.frontend_src
     path = ".env"
     text = "NODE_ENV=production"
 }
 
-run fs write_text web_self_url {
-    src = fs.write_text.web_node_env.tree
+input frontend_url {
+    type = "string"
+}
+
+task add_web_self_url {
+    op = "fs.write_text"
+    src = add_web_node_env.tree
     path = ".env"
-    text = "APP_URL=https://<OVERRIDE REQUIRED>"
+    text = input.frontend_url
     append = "yes"
 }
 
-run fs write_text web_api_url {
-    src = fs.write_text.web_self_url.tree
+input api_url {
+    type = "string"
+}
+
+task add_web_api_url {
+    op = "fs.write_text"
+    src = add_web_self_url.tree
     path = ".env"
-    text = "APP_URL_API=https://<OVERRIDE REQUIRED>"
+    text = input.api_url
     append = "yes"
 }
 
-run npm build web {
-    src = fs.write_text.web_api_url.tree
+task build_frontend {
+    op = "npm.build"
+    src = add_web_api_url.tree
     build_script = "build:client"
     build_dir = "public"
 }
 
-run netlify deploy web {
-    src = npm.build.web.tree
-    site-id = "OVERRIDE REQUIRED"
-    auth-token = "OVERRIDE REQUIRED"
+input netlify_site_id {
+    type = "string"
 }
 
-// outputs {
-//     deploy_logs = netlify.deploy.web._stdout
-// }
+input netlify_auth_token {
+    type = "string"
+}
+
+task deploy_frontend {
+    op = "netlify.deploy"
+    src = build_frontend.tree
+    site-id = input.netlify_site_id
+    auth-token = input.netlify_auth_token
+}

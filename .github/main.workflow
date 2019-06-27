@@ -13,8 +13,6 @@ action "bl-run" {
   uses = "./.github/actions/bl"
   needs = "master-branch-filter"
   env = {
-    BL_PIPELINE = "acme-clothing-staging"
-    BL_INPUT_OVERRIDE = "git.clone.web.ref"
     BL_API_SERVER = "http://demo.infralabs.io:8080/query"
   }
 }
