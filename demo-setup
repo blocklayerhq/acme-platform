@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -ex
+
+setup_base() {
+	bl line rm acme-clothing-base || true
+	bl line create acme-clothing-base -f ./acme-clothing.pipeline -d "Base Developer Pipeline for ACME"
+	OVERRIDES=()
+	. .overrides.acme-clothing-base.secret
+	bl line run acme-clothing-base "${OVERRIDES[@]}"
+}
+
+setup_staging() {
+	bl line rm acme-clothing-staging || true
+
+	cat <<EOF
+	Please manually create the staging pipeline, then press enter.
+
+	1. Navigate to web dashboard
+	2. Click "create pipeline"
+	3. Name: "acme-clothing-staging"
+	4. Clone pipeline: acme-clothing-base
+	5. Click create
+
+EOF
+	read _
+	bl line run -d acme-clothing-staging -o name=acme-clothing-staging
+}
+
+setup_base
+setup_staging
