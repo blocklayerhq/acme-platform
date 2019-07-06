@@ -1,146 +1,236 @@
-///
-/// CODEAMP BACKEND
-///
-
-input backend_src {
-    type = "fstree"
-    value = fetch_backend.tree
+input name {
+    type = "string"
+    // FIXME: this is a placeholder until the pipeline name is provided directly by the runtime
+    // (or an equivalent pipeline-unique identifier)
+}
+task name_slug {
+    op = "text.sh"
+    src = input.name
+    cmd = "tr _ -"
 }
 
-task fetch_backend {
+/// Acme Clothing is based on an open-source project called "crate".
+/// For now we deploy directly from the upstream crate repository, 
+/// to make sure we can deploy an application without controlling its
+/// development environment.
+
+task monorepo {
     op = "git.clone"
-    src = "https://github.com/codeamp/circuit.git"
+    src = "https://github.com/atulmy/crate.git"
 }
 
-task build_backend {
+//
+// API deployment
+//
+
+// By default, get API source code from a subtree of the monorepo.
+// Optionally, override API source code with the "api_src" input.
+task api_src {
+    op = "fs.subtree"
+    src = monorepo.out
+    path = "code/api"
+}
+input api_src {
+    type = "fstree"
+    value = api_src.out
+}
+
+task api_docker_image {
     op = "docker.build"
-    src = input.backend_src
+    src = input.api_src
+    dockerfile = input.api_docker_image_dockerfile
+}
+input api_docker_image_dockerfile {
+    type = "string"
+    value = <<-EOF
+	from alpine as api
+	run apk update
+	run apk add npm
+	run npm config set unsafe-perm true
+	run apk add gcc g++ make
+	run apk add python
+	run ["npm", "install", "-g", "nodemon"]
+	run ["npm", "install", "-g", "babel-cli"]
+	copy . /src/
+	workdir /src
+	run npm install
+	run npm run build:prod
+	env NODE_ENV=production
+	cmd ["npm", "run", "start:server"]
+EOF
 }
 
-input gcp_service_key {
+input api_gcp_project {
+    type = "string"
+}
+input api_gcp_service_key {
     type = "string"
 }
 
-input gcp_project {
-    type = "string"
-    value = "deploy-test-231020"
+task api_docker_repo {
+    op = "gcr.push"
+    image = api_docker_image.out
+    name = "acme-clothing-api"
+    # FIXME: Since we're building from an input, we shouldn't use the task's git
+    # commit as a tag
+    tag = monorepo.commit
+    project = input.api_gcp_project
+    service-key = input.api_gcp_service_key
 }
 
-input gcp_region {
+task api_kubernetes_config {
+    op = "text.template"
+    syntax = "shell"
+    src = input.api_kubernetes_config_src
+    vars_IMG = api_docker_repo.full-name
+}
+input api_kubernetes_config_src {
+    type = "string"
+    value = <<EOF
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: acme-clothing-api
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: acme-clothing-api
+    spec:
+      containers:
+        - image: $IMG
+          name: api
+          command: ["npm", "run", "start:server"]
+          ports:
+            - name: api-port
+              containerPort: 8000
+            - name: debug-port
+              containerPort: 8001
+          env:
+      initContainers:
+        - name: setup
+          image: $IMG
+          command: ["npm", "run", "setup"]
+          env:
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: acme-clothing-api
+spec:
+  type: NodePort
+  selector:
+    app: acme-clothing-api
+  ports:
+    - name: api-port
+      port: 8000
+      targetPort: 8000
+    - name: debug-port
+      port: 8001
+      targetPort: 8001
+EOF
+}
+
+task api_deployment {
+    op = "gke.deploy-file"
+    src = api_kubernetes_config.out
+    project = input.api_gcp_project
+    service-key = input.api_gcp_service_key
+    kubernetes-cluster = input.api_deployment_cluster
+    // FIXME: rename the bot input 'region' to the more accurate 'compute_zone'
+    region = input.api_deployment_compute_zone
+    namespace = api_deployment_namespace.out
+}
+input api_deployment_compute_zone {
     type = "string"
     value = "us-west2"
 }
-
-task push_backend {
-    op = "gcr.push"
-    image = build_backend.image
-    name = "circuit"
-    # FIXME: Since we're building from an input, we shouldn't use the task's git
-    # commit as a tag
-    tag = fetch_backend.commit
-    project = input.gcp_project
-    service-key = input.gcp_service_key
-}
-
-input kubernetes_specs {
-    type = "fstree"
-}
-
-task templatize_backend {
-    op = "kubernetes.kustomize"
-    src = input.kubernetes_specs
-    build-path = "overlays/staging"
-    image = push_backend.full-name
-}
-
-input kubernetes_namespace {
+input api_deployment_cluster {
     type = "string"
 }
-
-input kubernetes_cluster {
+input api_deployment_namespace {
     type = "string"
-    value = "cluster"
+    value = api_deployment_namespace.out
+}
+task api_deployment_namespace {
+    op = "text.printf"
+    fmt = "bl-%s"
+    args_0 = name_slug.out
+}
+task api_deployment_url {
+    op = "text.printf"
+    fmt = "https://api.%s.infralabs.io"
+    args_0 = name_slug.out
 }
 
-task deploy_backend {
-    op = "gke.deploy"
-    src = templatize_backend.tree
-    project = input.gcp_project
-    service-key = input.gcp_service_key
-    kubernetes-cluster = input.kubernetes_cluster
-    region = input.gcp_region
-    namespace = input.kubernetes_namespace
-}
 
 ///
-/// ACME CLOTHING STORE FRONTEND
+/// Frontend deployment
+///
+/// Application stack: ReactJS
+/// Infrastructure: Netlify
 ///
 
-input frontend_src {
-    type = "fstree"
-    value = cd_frontend.tree
-}
+// By default, get frontend source code from a subtree of the monorepo.
+// Optionally, override frontend source code with the "frontend_src" input.
 
-task fetch_frontend {
-    op = "git.clone"
-    src = "https://github.com/atulmy/crate"
-}
-
-task cd_frontend {
+task frontend_src {
     op = "fs.subtree"
-    src = fetch_frontend.tree
+    src = monorepo.out
     path = "code/web"
 }
+input frontend_src {
+    type = "fstree"
+    value = frontend_src.out
+}
 
-task add_web_node_env {
+// Assemble the npm/node build environment for the frontend
+task frontend_buildenv {
+    op = "env.to_shell"
+    // FIXME: this is a hack to workaround the lack of map type
+    // Close your eyes and imagine a map[string]string :)
+    keys_NODE_ENV    = "production"
+    keys_APP_URL     = frontend_deployment_url.out
+    keys_APP_URL_API = api_deployment_url.out
+}
+
+task frontend_src_with_buildenv {
     op = "fs.write_text"
     src = input.frontend_src
     path = ".env"
-    text = "NODE_ENV=production"
+    text = frontend_buildenv.out
 }
 
-input frontend_url {
-    type = "string"
-}
-
-task add_web_self_url {
-    op = "fs.write_text"
-    src = add_web_node_env.tree
-    path = ".env"
-    text = input.frontend_url
-    append = "yes"
-}
-
-input api_url {
-    type = "string"
-}
-
-task add_web_api_url {
-    op = "fs.write_text"
-    src = add_web_self_url.tree
-    path = ".env"
-    text = input.api_url
-    append = "yes"
-}
-
-task build_frontend {
+task frontend_build {
     op = "npm.build"
-    src = add_web_api_url.tree
+    src = frontend_src_with_buildenv.out
     build_script = "build:client"
     build_dir = "public"
 }
 
-input netlify_site {
-    type = "string"
-}
-
-input netlify_auth_token {
-    type = "string"
-}
-
-task deploy_frontend {
+task frontend_deployment {
     op = "netlify.deploy"
-    src = build_frontend.tree
-    name = input.netlify_site
-    auth-token = input.netlify_auth_token
+    src = frontend_build.out
+    name = frontend_deployment_name.out
+    auth-token = input.frontend_deployment_auth_token
+    create-site = "true"
+}
+input frontend_deployment_name {
+    type = "string"
+    value = frontend_deployment_name.out
+}
+task frontend_deployment_name {
+    op = "text.printf"
+    fmt = "bl-%s"
+    args_0 = name_slug.out
+}
+input frontend_deployment_auth_token {
+    type = "string"
+}
+task frontend_deployment_url {
+    op = "text.printf"
+    fmt = "https://%s.netlify.com"
+    args_0 = input.frontend_deployment_name
 }
