@@ -3,10 +3,10 @@ input name {
     // FIXME: this is a placeholder until the pipeline name is provided directly by the runtime
     // (or an equivalent pipeline-unique identifier)
 }
-task name_slug {
+task annotation_key {
     op = "text.sh"
     src = input.name
-    cmd = "tr _ -"
+    cmd = "sed -e 's/_/-/g' -e 's/^/bl-/'"
 }
 
 /// Acme Clothing is based on an open-source project called "crate".
@@ -141,7 +141,7 @@ task api_deployment {
     kubernetes-cluster = input.api_deployment_cluster
     // FIXME: rename the bot input 'region' to the more accurate 'compute_zone'
     region = input.api_deployment_compute_zone
-    namespace = api_deployment_namespace.out
+    namespace = input.api_deployment_namespace
 }
 input api_deployment_compute_zone {
     type = "string"
@@ -152,17 +152,12 @@ input api_deployment_cluster {
 }
 input api_deployment_namespace {
     type = "string"
-    value = api_deployment_namespace.out
-}
-task api_deployment_namespace {
-    op = "text.printf"
-    fmt = "bl-%s"
-    args_0 = name_slug.out
+    value = annotation_key.out
 }
 task api_deployment_url {
     op = "text.printf"
     fmt = "https://api.%s.infralabs.io"
-    args_0 = name_slug.out
+    args_0 = annotation_key.out
 }
 
 
@@ -213,18 +208,13 @@ task frontend_build {
 task frontend_deployment {
     op = "netlify.deploy"
     src = frontend_build.out
-    name = frontend_deployment_name.out
+    name = input.frontend_deployment_name
     auth-token = input.frontend_deployment_auth_token
     create-site = "true"
 }
 input frontend_deployment_name {
     type = "string"
-    value = frontend_deployment_name.out
-}
-task frontend_deployment_name {
-    op = "text.printf"
-    fmt = "bl-%s"
-    args_0 = name_slug.out
+    value = annotation_key.out
 }
 input frontend_deployment_auth_token {
     type = "string"
