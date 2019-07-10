@@ -19,6 +19,7 @@ task monorepo {
     src = "https://github.com/atulmy/crate.git"
 }
 
+
 //
 // API deployment
 //
@@ -158,6 +159,23 @@ task api_deployment_url {
     op = "text.printf"
     fmt = "https://api.%s.infralabs.io"
     args_0 = annotation_key.out
+}
+
+task api_db {
+    op = "mysql.create-db"
+    db_name = annotation_key.out
+    host = input.api_db_host
+    admin_user = input.api_db_admin_user
+    admin_password = input.api_db_admin_password
+}
+input api_db_host {
+    type = "string"
+}
+input api_db_admin_user {
+    type = "string"
+}
+input api_db_admin_password {
+    type = "string"
 }
 
 
