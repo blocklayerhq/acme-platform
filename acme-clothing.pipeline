@@ -116,7 +116,7 @@ spec:
           volumeMounts:
             - name: api-db-config
               subPath: json
-              mountPath: /src/config/database.json
+              mountPath: /src/src/config/database.json
               readOnly: true
           ports:
             - name: api-port
@@ -125,14 +125,14 @@ spec:
               containerPort: 8001
           env:
       initContainers:
-        - name: setup
+        - name: db-setup
           image: $IMG
-          command: ["npm", "run", "setup"]
+          command: ["npm", "run", "setup:db"]
           env:
           volumeMounts:
             - name: api-db-config
               subPath: json
-              mountPath: /src/config/database.json
+              mountPath: /src/src/config/database.json
               readOnly: true
 ---
 apiVersion: v1
@@ -156,16 +156,18 @@ kind: Secret
 metadata:
   name: api-db-config
 type: Opaque
-data:
-	json: |
-          $DB_CONFIG
+stringData:
+  json: '
+    $DB_CONFIG
+  '
+
 EOF
 }
 
 // FIXME: rename to api_kubernetes_namespace
 task api_deployment {
     op = "gke.deploy-file"
-    tool = "kubectl"
+    // tool = "kubectl"
     src = api_kubernetes_config.out
     project = input.api_gcp_project
     service-key = input.api_gcp_service_key
@@ -194,11 +196,18 @@ task api_deployment_url {
 task api_db {
     op = "mysql.create-db"
     db_name = annotation_key.out
-    host = input.api_db_host
+    host = input.api_db_host_public
     admin_user = input.api_db_admin_user
     admin_password = input.api_db_admin_password
 }
-input api_db_host {
+// DB public IP is authorized from the agent IP.
+// We use it to provision the DB from the bot directly
+input api_db_host_public {
+    type = "string"
+}
+// DB private IP is authorized from the GKE Kubernetes network
+// We use it to migrate the DB from a kubernetes initContainer on GKE
+input api_db_host_private {
     type = "string"
 }
 input api_db_admin_user {
@@ -212,7 +221,7 @@ task api_db_config {
     op = "env.to_json"
     keys_user = input.api_db_admin_user
     keys_password = input.api_db_admin_password
-    keys_host = input.api_db_host
+    keys_host = input.api_db_host_private
     keys_db_name = annotation_key.out
     transform = <<-EOF
 	{
