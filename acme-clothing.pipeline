@@ -84,7 +84,9 @@ task api_kubernetes_config {
     syntax = "shell"
     src = input.api_kubernetes_config_src
     vars_IMG = api_docker_repo.full-name
+    vars_DB_CONFIG = api_db_config.out
 }
+// FIXME: rename "_src" to "_template" for clarity
 input api_kubernetes_config_src {
     type = "string"
     value = <<EOF
@@ -100,10 +102,22 @@ spec:
       labels:
         app: acme-clothing-api
     spec:
+      volumes:
+       - name: api-db-config
+         secret:
+           secretName: api-db-config
+           items:
+           - key: json
+             path: json
       containers:
         - image: $IMG
           name: api
           command: ["npm", "run", "start:server"]
+          volumeMounts:
+            - name: api-db-config
+              subPath: json
+              mountPath: /src/config/database.json
+              readOnly: true
           ports:
             - name: api-port
               containerPort: 8000
@@ -115,6 +129,11 @@ spec:
           image: $IMG
           command: ["npm", "run", "setup"]
           env:
+          volumeMounts:
+            - name: api-db-config
+              subPath: json
+              mountPath: /src/config/database.json
+              readOnly: true
 ---
 apiVersion: v1
 kind: Service
@@ -131,11 +150,22 @@ spec:
     - name: debug-port
       port: 8001
       targetPort: 8001
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: api-db-config
+type: Opaque
+data:
+	json: |
+          $DB_CONFIG
 EOF
 }
 
+// FIXME: rename to api_kubernetes_namespace
 task api_deployment {
     op = "gke.deploy-file"
+    tool = "kubectl"
     src = api_kubernetes_config.out
     project = input.api_gcp_project
     service-key = input.api_gcp_service_key
@@ -178,6 +208,25 @@ input api_db_admin_password {
     type = "string"
 }
 
+task api_db_config {
+    op = "env.to_json"
+    keys_user = input.api_db_admin_user
+    keys_password = input.api_db_admin_password
+    keys_host = input.api_db_host
+    keys_db_name = annotation_key.out
+    transform = <<-EOF
+	{
+		production: {
+			username: .user,
+			password: .password,
+			database: .db_name,
+			host:     .host,
+                        dialect:  "mysql",
+                        seederStorage: "sequelize"
+		}
+	}
+EOF
+}
 
 ///
 /// Frontend deployment
