@@ -10,8 +10,12 @@ setup_base() {
 	bl line run acme-clothing-base "${OVERRIDES[@]}"
 }
 
+setup_shtest() {
+	bl line ls | tr -s ' ' | cut -d' ' -f2 | sed -E -n '2,$s/^(shtest.*)$/bl line rm \1/p' | sh -x
+}
+
 setup_staging() {
-	bl line rm acme-clothing-staging || true
+	bl line ls | tr -s ' ' | cut -d' ' -f2 | sed -E -n '2,$s/^(acme-clothing-staging)$/bl line rm \1/p' | sh -x
 
 	cat <<EOF
 	Please manually create the staging pipeline, then press enter.
@@ -28,4 +32,5 @@ EOF
 }
 
 setup_base
+setup_shtest
 setup_staging
