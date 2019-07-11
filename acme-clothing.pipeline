@@ -92,6 +92,15 @@ input api_kubernetes_config_src {
     value = <<EOF
 ---
 apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: api-public-endpoint
+spec:
+  backend:
+    serviceName: acme-clothing-api
+    servicePort: 8000
+---
+apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: acme-clothing-api
