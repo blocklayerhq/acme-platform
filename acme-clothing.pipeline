@@ -184,6 +184,7 @@ task api_deployment {
     // FIXME: rename the bot input 'region' to the more accurate 'compute_zone'
     region = input.api_deployment_compute_zone
     namespace = input.api_deployment_namespace
+    extra_check = ".items[]|select(.kind==\"Ingress\")|.status.loadBalancer.ingress[].ip"
 }
 input api_deployment_compute_zone {
     type = "string"
@@ -196,10 +197,14 @@ input api_deployment_namespace {
     type = "string"
     value = annotation_key.out
 }
+
+
+
 task api_deployment_url {
-    op = "text.printf"
-    fmt = "https://api.%s.infralabs.io"
-    args_0 = annotation_key.out
+    op = "text.jq"
+    src = api_deployment.kubernetes_state
+    raw = "true"
+    cmd = "\"http://\" + (.items[]|select(.kind==\"Ingress\")|.status.loadBalancer.ingress[0].ip)"
 }
 
 task api_db {
