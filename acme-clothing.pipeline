@@ -8,6 +8,11 @@ task annotation_key {
     src = input.name
     cmd = "sed -e 's/_/-/g' -e 's/^/bl-/'"
 }
+task name_url_safe {
+    op = "text.sh"
+    src = input.name
+    cmd = "sed -e 's/_/-/g'"
+}
 
 /// Acme Clothing is based on an open-source project called "crate".
 /// For now we deploy directly from the upstream crate repository, 
@@ -19,6 +24,62 @@ task monorepo {
     src = "https://github.com/atulmy/crate.git"
 }
 
+
+//
+// DNS setup
+//
+
+// The DNS domain under which to create subdomains for each environment
+// For example "dev.acme.infralabs.io"
+input dns_domain {
+    type = "string"
+}
+// The DNS zone managed by Cloudflare
+// This may be different from the dns_domain, since Cloudflare refuses
+// to manage subdomains.
+//
+// For example: "infralabs.io"
+//
+// FIXME: This cloud be generated from dns_domain
+input dns_cloudflare_zone {
+    type = "string"
+}
+input dns_cloudflare_token {
+    type = "string"
+}
+input dns_cloudflare_email {
+    type = "string"
+}
+task dns_subdomain {
+    op = "text.printf"
+    fmt = "%s.%s"
+    args_0 = name_url_safe.out
+    args_1 = input.dns_domain
+}
+task api_dns_record {
+    op = "cloudflare.set-record"
+    zone = input.dns_cloudflare_zone
+    record_name = api_dns_record_name.out
+    record_type = "A"
+    record_value = api_deployment_ip.out
+    token = input.dns_cloudflare_token
+    email = input.dns_cloudflare_email
+}
+task api_dns_record_name {
+    op = "text.printf"
+    fmt = "api.%s"
+    args_0 = dns_subdomain.out
+}
+task frontend_dns_record {
+    op = "cloudflare.set-record"
+    zone = input.dns_cloudflare_zone
+    // <pipeline>.<dns_domain> points to the frontend on Netlify
+    record_name = dns_subdomain.out
+    record_type = "CNAME"
+    record_value = frontend_deployment_hostname.out
+    token = input.dns_cloudflare_token
+    email = input.dns_cloudflare_email
+}
 
 //
 // API deployment
@@ -198,13 +259,18 @@ input api_deployment_namespace {
     value = annotation_key.out
 }
 
-
-
 task api_deployment_url {
+    op = "text.printf"
+    // FIXME: support https on API ingress
+    fmt = "http://%s"
+    args_0 = api_dns_record_name.out
+}
+
+task api_deployment_ip {
     op = "text.jq"
     src = api_deployment.kubernetes_state
     raw = "true"
-    cmd = "\"http://\" + (.items[]|select(.kind==\"Ingress\")|.status.loadBalancer.ingress[0].ip)"
+    cmd = ".items[]|select(.kind==\"Ingress\")|.status.loadBalancer.ingress[0].ip"
 }
 
 task api_db {
@@ -301,6 +367,7 @@ task frontend_deployment {
     name = input.frontend_deployment_name
     auth-token = input.frontend_deployment_auth_token
     create-site = "true"
+    custom-domain = dns_subdomain.out
 }
 input frontend_deployment_name {
     type = "string"
@@ -309,8 +376,13 @@ input frontend_deployment_name {
 input frontend_deployment_auth_token {
     type = "string"
 }
+task frontend_deployment_hostname {
+    op = "text.printf"
+    fmt = "%s.netlify.com"
+    args_0 = input.frontend_deployment_name
+}
 task frontend_deployment_url {
     op = "text.printf"
-    fmt = "https://%s.netlify.com"
-    args_0 = input.frontend_deployment_name
+    fmt = "https://%s"
+    args_0 = dns_subdomain.out
 }
