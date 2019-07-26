@@ -132,6 +132,7 @@ input api_gcp_service_key {
 task api_docker_repo {
     op = "gcr.push"
     image = api_docker_image.out
+    # FIXME: this should be namespaced by pipeline name!
     name = "acme-clothing-api"
     # FIXME: Since we're building from an input, we shouldn't use the task's git
     # commit as a tag
