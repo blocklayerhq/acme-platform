@@ -34,51 +34,20 @@ task monorepo {
 input dns_domain {
     type = "string"
 }
-// The DNS zone managed by Cloudflare
-// This may be different from the dns_domain, since Cloudflare refuses
-// to manage subdomains.
-//
-// For example: "infralabs.io"
-//
-// FIXME: This cloud be generated from dns_domain
-input dns_cloudflare_zone {
+input dns_api_domain {
     type = "string"
 }
-input dns_cloudflare_token {
-    type = "string"
-}
-input dns_cloudflare_email {
-    type = "string"
-}
-task dns_subdomain {
+task web_dns_record_name {
     op = "text.printf"
     fmt = "%s.%s"
     args_0 = name_url_safe.out
     args_1 = input.dns_domain
 }
-task api_dns_record {
-    op = "cloudflare.set-record"
-    zone = input.dns_cloudflare_zone
-    record_name = api_dns_record_name.out
-    record_type = "A"
-    record_value = api_deployment_ip.out
-    token = input.dns_cloudflare_token
-    email = input.dns_cloudflare_email
-}
 task api_dns_record_name {
     op = "text.printf"
-    fmt = "api.%s"
-    args_0 = dns_subdomain.out
-}
-task frontend_dns_record {
-    op = "cloudflare.set-record"
-    zone = input.dns_cloudflare_zone
-    // <pipeline>.<dns_domain> points to the frontend on Netlify
-    record_name = dns_subdomain.out
-    record_type = "CNAME"
-    record_value = frontend_deployment_hostname.out
-    token = input.dns_cloudflare_token
-    email = input.dns_cloudflare_email
+    fmt = "%s.%s"
+    args_0 = name_url_safe.out
+    args_1 = input.dns_api_domain
 }
 
 //
@@ -147,6 +116,7 @@ task api_kubernetes_config {
     src = input.api_kubernetes_config_src
     vars_IMG = api_docker_repo.full-name
     vars_DB_CONFIG = api_db_config.out
+    vars_API_HOSTNAME = api_dns_record_name.out
 }
 // FIXME: rename "_src" to "_template" for clarity
 input api_kubernetes_config_src {
@@ -157,10 +127,17 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: api-public-endpoint
+  annotations: 
+    kubernetes.io/ingress.class: traefik
 spec:
-  backend:
-    serviceName: acme-clothing-api
-    servicePort: 8000
+  rules:
+    - host: $API_HOSTNAME
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: acme-clothing-api
+              servicePort: 8000
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -246,7 +223,6 @@ task api_deployment {
     // FIXME: rename the bot input 'region' to the more accurate 'compute_zone'
     region = input.api_deployment_compute_zone
     namespace = input.api_deployment_namespace
-    extra_check = ".items[]|select(.kind==\"Ingress\")|.status.loadBalancer.ingress[].ip"
 }
 input api_deployment_compute_zone {
     type = "string"
@@ -265,13 +241,6 @@ task api_deployment_url {
     // FIXME: support https on API ingress
     fmt = "http://%s"
     args_0 = api_dns_record_name.out
-}
-
-task api_deployment_ip {
-    op = "text.jq"
-    src = api_deployment.kubernetes_state
-    raw = "true"
-    cmd = ".items[]|select(.kind==\"Ingress\")|.status.loadBalancer.ingress[0].ip"
 }
 
 task api_db {
@@ -368,7 +337,7 @@ task frontend_deployment {
     name = input.frontend_deployment_name
     auth-token = input.frontend_deployment_auth_token
     create-site = "true"
-    custom-domain = dns_subdomain.out
+    custom-domain = web_dns_record_name.out
 }
 input frontend_deployment_name {
     type = "string"
@@ -385,5 +354,5 @@ task frontend_deployment_hostname {
 task frontend_deployment_url {
     op = "text.printf"
     fmt = "https://%s"
-    args_0 = dns_subdomain.out
+    args_0 = web_dns_record_name.out
 }
