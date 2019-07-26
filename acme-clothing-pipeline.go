@@ -18,10 +18,10 @@ type Pipeline struct {
 
 	Config struct {
 		DNS struct {
-			TopLevelDomain	string	`desc:"Top-level domain for DNS configuration"`
-			CloudflareToken	string	`desc:"Cloudflare API token" secret:true`
-			CloudflareEmail	string	`desc:"Cloudflare account email"`
-			CloudflareZone	string	`desc:"Cloudflare top-level zone name"`
+			TopLevelDomain	bl.StringConfig	`desc:"Top-level domain for DNS config"`
+			CloudflareToken	bl.StringConfig	`desc:"Cloudflare API token" secret:true`
+			CloudflareEmail	bl.StringConfig `desc:"Cloudflare account email"`
+			CloudflareZone	bl.StringConfig `desc:"Cloudflare top-level zone name"`
 		}
 	}
 
@@ -88,11 +88,11 @@ func New() *Pipeline {
 
 	// Build and deploy the API
 	p.apiDockerImage.Update = func(sandbox bl.Sandbox) {
-		
+		// FIXME: actually Build the image
 	}
 
-	// Provision the database
-
+	// csion the database
+	p.apiDb.
 
 	// Build and deploy the web frontend
 
