@@ -18,11 +18,31 @@ type Pipeline struct {
 
 	Config struct {
 		DNS struct {
-			TopLevelDomain	bl.StringConfig	`desc:"Top-level domain for DNS config"`
-			CloudflareToken	bl.StringConfig	`desc:"Cloudflare API token" secret:true`
-			CloudflareEmail	bl.StringConfig `desc:"Cloudflare account email"`
-			CloudflareZone	bl.StringConfig `desc:"Cloudflare top-level zone name"`
+			TopLevelDomain	bl.String `desc:"Top-level domain for DNS config"`
+			CloudflareToken	bl.String `desc:"Cloudflare API token" secret:true`
+			CloudflareEmail	bl.String `desc:"Cloudflare account email"`
+			CloudflareZone	bl.String `desc:"Cloudflare top-level zone name"`
 		}
+	}
+
+	Gates struct {
+
+		// Gate to provision, and deploy to, development environments
+		Dev struct {
+			UserID		bl.String `desc:"User ID"`
+			SandboxName	bl.String `desc:"Name of the development sandbox (scoped by user ID)"`
+			WebSource	bl.Tree   `optional desc:"Source code for web frontend"`
+		}
+
+		// Gate to deploy production
+		Prod struct {
+		}
+
+		// Deploy web frontend staging (production API & DB)
+		WebStaging struct {
+
+		}
+
 	}
 
 	// Fetch & split up source code repositories
