@@ -25,24 +25,8 @@ type Pipeline struct {
 		}
 	}
 
-	Gates struct {
-
-		// Gate to provision, and deploy to, development environments
-		Dev struct {
-			UserID		bl.String `desc:"User ID"`
-			SandboxName	bl.String `desc:"Name of the development sandbox (scoped by user ID)"`
-			WebSource	bl.Tree   `optional desc:"Source code for web frontend"`
-		}
-
-		// Gate to deploy production
-		Prod struct {
-		}
-
-		// Deploy web frontend staging (production API & DB)
-		WebStaging struct {
-
-		}
-
+	Inputs struct {
+		EnvName	bl.String `desc:"Name of the environment to deploy to"`
 	}
 
 	// Fetch & split up source code repositories
@@ -76,25 +60,49 @@ func New() *Pipeline {
 	var p Pipeline
 
 	// Fetch & Split up source code repositories
-	p.monorepo.Url = "https://github.com/atulmy/crate.git"
-	p.apiSource.Update = func(sandbox bl.Sandbox) {
-		exec.Cmd("cp", "-a", path.Join("deps/monorepo", "code/api"), "self/tree").Run()
-	})
-	p.webSource.Update = func(sandbox bl.Sandbox) {
-		exec.Cmd("cp", "-a", path.Join("inputs/monorepo", "code/web"), "self/tree").Run()
-	})
+	p.monorepo = git.NewRepo("https://github.com/atulmy/crate.git")
+	p.apiSource = fs.Subtree(p.monorepo, "code/api")
+	p.webSource = fs.Subtree(p.monorepo, "code/web")
 
 	// Configure DNS
-	p.webDNS.RecordType = "CNAME"
-	p.webDNS.Update = func(sandbox bl.Sandbox) {
-		var (
-			tldomain	= sandbox.Deps.GetString("Config.DNS.TopLevelDomain")
-			envname		= sandbox.Deps.GetString("Name")
-		)
-		webDNS := dns.LoadRecord(sandbox)
-		webDNS.RecordName = fmt.Sprintf("%s.%s", urlsafe(pipeline_name), tldomain)
-		dns.SaveRecord(&webDNS, sandbox)
-	}
+	p.webDNS = cloudflare.NewRecord()
+	p.webDNS.RecordType = bl.String("CNAME")
+	p.webDNS.RecordName = bl.Stringf(func(tldomain, envname string) string {
+			return fmt.Sprintf("%s.%s", urlsafe(envname), tldomain)
+		},
+		p.Config.DNS.TopLevelDomain, b.Input.EnvName
+	)
+	p.webDNS.RecordValue = bl.Stringf(func(envname string) string {
+			return fmt.Sprtinf("%s.netlify.com", urlsafe(envname))
+	}, p.Input.EnvName)
+
+	// Build and deploy the API
+	p.apiDockerImage = docker.Image(p.apiSource.Tree)
+	p.apiDockerImage.Dockerfile = `
+		from alpine as api
+		run apk update
+		run apk add npm
+		run npm config set unsafe-perm true
+		run apk add gcc g++ make
+		run apk add python
+		run ["npm", "install", "-g", "nodemon"]
+		run ["npm", "install", "-g", "babel-cli"]
+		copy . /src/
+		workdir /src
+		run npm install
+		run npm run build:prod
+		env NODE_ENV=production
+		cmd ["npm", "run", "start:server"]
+	`
+
+	p.webDNS.CloudflareToken = p.Config.DNS.CloudflareToken
+	p.webDNS.CloudflareEmail = p.Config.DNS.CloudflareEmail
+	p.webDNS.CloudflareToken = p.Config.DNS.CloudflareToken
+	p.webDNS.CloudflareZone  = p.Config.DNS.CloudflareZone
+o
+
+
+
 	p.apiDNS.RecordType = "A"
 	p.apiDNS.Update = func(self *dns.Record, sandbox bl.Sandbox) {
 		var (
