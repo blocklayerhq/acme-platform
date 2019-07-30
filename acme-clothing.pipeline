@@ -243,8 +243,7 @@ input api_deployment_namespace {
 
 task api_deployment_url {
     op = "text.printf"
-    // FIXME: support https on API ingress
-    fmt = "http://%s"
+    fmt = "https://%s"
     args_0 = api_dns_record_name.out
 }
 
