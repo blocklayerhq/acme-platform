@@ -170,7 +170,7 @@ spec:
           volumeMounts:
             - name: api-db-config
               subPath: json
-              mountPath: /src/src/config/database.json
+              mountPath: /src/build/config/database.json
               readOnly: true
           ports:
             - name: api-port
