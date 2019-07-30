@@ -129,7 +129,13 @@ metadata:
   name: api-public-endpoint
   annotations: 
     kubernetes.io/ingress.class: traefik
+    certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+    certmanager.k8s.io/acme-http01-edit-in-place: "true"
 spec:
+  tls:
+    - hosts:
+        - $API_HOSTNAME
+      secretName: api-tls
   rules:
     - host: $API_HOSTNAME
       http:
@@ -188,7 +194,6 @@ kind: Service
 metadata:
   name: acme-clothing-api
 spec:
-  type: NodePort
   selector:
     app: acme-clothing-api
   ports:
