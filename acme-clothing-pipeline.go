@@ -1,14 +1,14 @@
 import (
 	"strings"
 
-	"bl"
-	"bl/git"
-	"bl/cloudflare"
-	"bl/dns"
-	"bl/fs"
-	"bl/docker"
-	"bl/googlecloud"
-	"bl/netlify"
+	"blocklayerhq.com/bl"
+	"blocklayerhq.com/bl/git"
+	"blocklayerhq.com/bl/cloudflare"
+	"blocklayerhq.com/bl/dns"
+	"blocklayerhq.com/bl/fs"
+	"blocklayerhq.com/bl/docker"
+	"blocklayerhq.com/bl/googlecloud"
+	"blocklayerhq.com/bl/netlify"
 )
 
 // FIXME: define dev, staging and prod in the same pipeline
@@ -39,7 +39,7 @@ type Pipeline struct {
 	apiDNS		dns.Record		`deps:Name,Config.DNS`
 
 	// Build and deploy the API
-	apiDockerImage	docker.Image		`deps:apiSourceCode`
+	apiDockerImage	docker.Image		`deps:apiSource`
 	apiDockerRepo	gcloud.Repository	`deps:apiDockerImage,Name`
 	apiKubConfig	fs.File			`deps:apiDockerRepo`
 	apiKubNamespace	gcloud.KubNamespace	`deps:apiKubConfig,Name`

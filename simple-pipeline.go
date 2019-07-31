@@ -1,7 +1,7 @@
 
 import (
-	"github.com/blocklayerhq/bl/fs"
-	"github.com/blocklayerhq/bl/git"
+	"blocklayerhq.com/bl/fs"
+	"blocklayerhq.com/bl/git"
 )
 
 type Pipeline struct {
