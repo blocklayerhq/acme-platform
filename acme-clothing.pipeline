@@ -1,3 +1,20 @@
+
+output url {
+    type = "string"
+    value = frontend_deployment_url.out
+}
+
+output api_url {
+    type = "string"
+    value = api_deployment_url.out
+}
+
+output git_commit {
+    type = "string"
+    value = monorepo.commit
+}
+
+
 input name {
     type = "string"
     // FIXME: this is a placeholder until the pipeline name is provided directly by the runtime
