@@ -1,4 +1,6 @@
 
+package acmeclothing
+
 // NOTES:
 //
 // - each component has a a 'address' field which is its globally unique identifier
@@ -16,6 +18,7 @@
 //		staging tree can model organization tree.
 
 import (
+	"blocklayerhq.com/bl"
 	"blocklayerhq.com/components/git"
 	"blocklayerhq.com/components/js"
 	"blocklayerhq.com/components/linux"
@@ -27,12 +30,11 @@ import (
 // Use an alias for the netlify package to avoid name conflicts
 ntlfy= netlify.Site
 
-component "acme-clothing": {
+AcmeClothing : bl.Component & {
 	subcomponents: {
 		monorepo: git.Repo & {
 			settings: {
 				url: "https://github.com/atulmy/crate.gi"
-				ref: "master"
 			}
 		}
 
@@ -53,8 +55,8 @@ component "acme-clothing": {
 							envFile: ".env"
 							env: {
 								NODE_ENV: "production"
-								APP_URL: _address 
-								APP_URL_API: api.address
+								APP_URL: "https://\(_address)"
+								APP_URL_API: "https://\(api.address)"
 							}
 						}
 					}
@@ -70,7 +72,7 @@ component "acme-clothing": {
 		}
 
 		api: {
-			address: *"api.\(_address)"|string }
+			address: *"api.\(_address)"|string
 			description: "Acme Clothing API backend"
 			subcomponents: {
 				container: linux.alpine.AppContainer & {
@@ -82,7 +84,7 @@ component "acme-clothing": {
 					settings: {
 						registry: string
 						pushTo: {
-							name: "\(registry)/\(api.slug)"
+							name: "\(settings.registry)/\(api.slug)"
 							tag: input.checksum
 						}
 						alpineVersion: [3, 10]
@@ -220,5 +222,6 @@ component "acme-clothing": {
 						}
 				}
 			}
+		}
 	}
 }

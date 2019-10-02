@@ -1,8 +1,13 @@
 package bl
 
+import (
+	"strings"
+)
+
 Component :: {
 	address: string
-	slug: strings.Replace(slug, "-", "_", -1)
+	slug: strings.Replace(address, "-", "_", -1)
+	description: string
 
 	settings <Key>: _
 	info <Key>: _
@@ -11,11 +16,11 @@ Component :: {
 		fromDir: *"/"|string
 		checkskum: *""|string
 	}
-	parentAddress=address
-	subcomponents <Name>: Component & {
-		address: *parentAddress|string
+	_address=address
+	subcomponents <Name>: /*Component & */ { // FIXME infinite recursion
+		address: *_address|string
+		...
 	}
-
 	install: {
 		engine: *[0, 0, 3] | [...int]
 		packages <Pkg>: {
@@ -23,11 +28,13 @@ Component :: {
 
 				"""
 		}
+		installCmd?: string
+		removeCmd?: string
 	}
-	remove? : string
 	pull?: string
 	assemble?: string
 	push?: string
+	...
 }
 
 component <Name>: Component
