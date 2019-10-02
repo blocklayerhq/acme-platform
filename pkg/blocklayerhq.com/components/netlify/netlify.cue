@@ -60,14 +60,10 @@ component netlify Site: {
 	}
 
 	push: #"""
-		if [ ! -s info/siteID ]; then
-			echo >&2 'undefined site ID. Component may not be properly installed.'
-			return 1
-		fi
 		netlify deploy \
 		    --dir="input/" \
 		    --auth='\#(settings.auth)'
-		    --site="$(cat info/siteID)" \
+		    --site="\#(info.siteID)" \
 		    --message="Blocklayer 'netlify deploy'" \
 		    --prod \
 		| tee tmp/stdout
