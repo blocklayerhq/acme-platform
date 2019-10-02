@@ -28,7 +28,7 @@ import (
 )
 
 // Use an alias for the netlify package to avoid name conflicts
-ntlfy= netlify.Site
+ntlfy=netlify.Site
 
 AcmeClothing : bl.Component & {
 	subcomponents: {

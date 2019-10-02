@@ -5,6 +5,7 @@ import (
 )
 
 Component :: {
+	name: string
 	address: string
 	slug: strings.Replace(address, "-", "_", -1)
 	description: string
@@ -34,10 +35,21 @@ Component :: {
 	pull?: string
 	assemble?: string
 	push?: string
+
+	treeDepth: int|*1
+	_treeDepth: treeDepth
+	treeText: """
+		\("\t"*treeDepth)\(name):
+		"""
+		/*
+		\(strings.Join([(sub & {treeDepth:_treeDepth}).treeText for _, sub in subcomponents]))
+		"""
+		*/
 	...
 }
 
-component <Name>: Component
+// FIXME: is this applied?
+component <Name>: Component & { foo: int }
 
 env <Address>: Component & {
 	address: Address
