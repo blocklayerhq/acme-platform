@@ -51,25 +51,20 @@ clothing: {
 				from: components.monorepo.output
 				fromDir: "code/api"
 			}
-			components app: {
-				settings build: {
-					tool: "npm"
+			settings: {
+				tool: "npm"
+				build: {
 					script: "build:prod"
 					dir: "."
+				}
+				run: {
+					script: "start:server"
 					env NODE_ENV: "production"
 				}
-			}
-			
-
-env NODE_ENV: "production"
-				appInstall: [
-					["npm", "install"],
-					["npm", "run", "build:prod"]
-				]
-				appRun: ["npm", "run", "start:server"]
 			}
 		}
 	
 		"api/db" blueprint: "mysql/database"
-		"api/kube": blueprint: "kubernetes/gke"
+		"api/kube" blueprint: "kubernetes/gke"
 	}
+}

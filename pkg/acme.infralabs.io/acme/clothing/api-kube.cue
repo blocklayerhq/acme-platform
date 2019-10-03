@@ -56,7 +56,7 @@ components "api/kube" settings resources: [
 				   - key: json
 					 path: json
 			  containers:
-				- image: \(container.info.pushedTo)
+				- image: \(container.info.pushedTo.fullNameWithDigest)
 				  name: api
 				  command: ["npm", "run", "start:server"]
 				  volumeMounts:
@@ -72,7 +72,7 @@ components "api/kube" settings resources: [
 				  env:
 			  initContainers:
 				- name: db-setup
-				  image: \(container.info.pushedTo)
+				  image: \(container.info.pushedTo.fullNameWithDigest)
 				  command: ["npm", "run", "setup:db"]
 				  env:
 				  volumeMounts:

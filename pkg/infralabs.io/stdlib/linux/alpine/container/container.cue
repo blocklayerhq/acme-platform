@@ -56,7 +56,7 @@ settings: {
 		COPY . \(settings.appDir)
 		WORKDIR \(settings.appDir)
 		\(strings.Join(["ENV " + k + "=" + v for k, v in settings.env], "\n"))
-		\(strings.Join(["RUN " + json.Marshal(cmd) for cmd in settings.appInstall], "\n")
+		\(strings.Join(["RUN " + json.Marshal(cmd) for cmd in settings.appInstall], "\n"))
 		\(appInstall)
 		CMD \(settings.appRun)
 		"""
