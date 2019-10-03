@@ -47,7 +47,7 @@ AcmeClothing : bl.Component & {
 				url: "https://github.com/atulmy/crate.gi"
 			}
 		}
-		web: {
+		web: bl.Component & {
 			description: "Acme Clothing web frontend"
 			subcomponents: {
 				app: js.App & {
@@ -79,7 +79,7 @@ AcmeClothing : bl.Component & {
 			}
 		}
 
-		api: {
+		api: bl.Component & {
 			address: *"api.\(AcmeClothing.address)"|string
 			slug: _
 			description: "Acme Clothing API backend"

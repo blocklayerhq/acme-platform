@@ -41,14 +41,11 @@ Component :: {
 	push?: string
 
 	treeDepth: int|*1
-	_treeDepth: treeDepth
+	_treeDepth= treeDepth
 	treeText: """
 		\("\t"*treeDepth)\(name):
+		\(strings.Join([(sub & {treeDepth:_treeDepth, ...}).treeText for _, sub in subcomponents], "\n"))
 		"""
-		/*
-		\(strings.Join([(sub & {treeDepth:_treeDepth}).treeText for _, sub in subcomponents]))
-		"""
-		*/
 	...
 }
 
