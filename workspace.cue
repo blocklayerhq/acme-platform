@@ -1,10 +1,7 @@
-import (
-	"acme.infralabs.io/acme/clothing"
-)
-
 workspace "acme.infralabs.io" prod: {
 	components: {
 		"acme-clothing": {
+			address web host: "acme.infralabs.io"
 			blueprint: "acme.infralabs.io/clothing"
 			// FIXME: subcomponents settings should be grouped under the parent settings,
 			// so that the user/installer does not need to overlay the .components field,
@@ -18,13 +15,5 @@ workspace "acme.infralabs.io" prod: {
 				}
 			}
 		}
-	}
-}
-
-/* GENERATED GLUE BELOW */
-
-workspace "acme.infralabs.io" prod components: {
-	"acme-clothing": clothing & {
-		...
 	}
 }

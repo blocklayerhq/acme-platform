@@ -1,7 +1,11 @@
 package clothing
 
 address web description: "Acme Clothing website"
-address api desription: "Acme Clothing API"
+address api: {
+	description: "Acme Clothing API"
+	host?: "api.\(address.web.host)"
+}
+
 
 components: {
 	"monorepo": {

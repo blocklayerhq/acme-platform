@@ -11,29 +11,31 @@ container=components["api/container"]
 db=components["api/db"]
 
 components "api/kube" settings resources: [
+	/* FIXME
 	yaml.Unmarshal("""
 		apiVersion: extensions/v1beta1
 		kind: Ingress
 		metadata:
-		  name: api-public-endpoint
-		  annotations: 
-			kubernetes.io/ingress.class: traefik
-			certmanager.k8s.io/cluster-issuer: letsencrypt-prod
-			certmanager.k8s.io/acme-http01-edit-in-place: "true"
+			name: api-public-endpoint
+			annotations:
+				kubernetes.io/ingress.class: traefik
+				certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+				certmanager.k8s.io/acme-http01-edit-in-place: "true"
 		spec:
-		  tls:
+			tls:
 			- hosts:
 				- \(address.api.host)
-			  secretName: api-tls
-		  rules:
-			- host: \(slug)
-			  http:
+				secretName: api-tls
+			rules:
+			- host: \(address.api.slug)
+				http:
 				paths:
-				  - path: /
+					- path: /
 					backend:
-					  serviceName: acme-clothing-api
-					  servicePort: 8000
+						serviceName: acme-clothing-api
+						servicePort: 8000
 		"""),
+	*/
 	yaml.Unmarshal("""
 		apiVersion: extensions/v1beta1
 		kind: Deployment
