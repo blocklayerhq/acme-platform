@@ -1,5 +1,3 @@
-package myblconfig
-
 import (
 	"strings"
 	"tool/cli"

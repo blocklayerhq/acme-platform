@@ -1,1 +1,1 @@
-pkg/blocklayerhq.com/bl/bl_tool.cue
+pkg/infralabs.io/bl/cli/bl_tool.cue

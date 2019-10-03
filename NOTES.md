@@ -1,4 +1,22 @@
 
+// NOTES: Oct 2019
+//
+// - each component has a a 'address' field which is its globally unique identifier
+//		a component address cannot be changed. It should be used for annotation & name mangling
+//		of external resources.
+//
+// - As a convenience, the component address has a 'slug' field: an approximation of the address using
+//		a reduced character set, so that it can be used as a key in as many external systems
+//		as possible (eg. kubernetes namespace, sql database name, etc)
+//
+//
+// - microstaging flow: components/environments can be "staged". A staging component is linked
+//		to its parent. The parent can access its staging environments (potentially many of them).
+//		staging can be nested.
+//		staging tree can model organization tree.
+
+-----------------------
+
 ## TODO
 
 - Fix direct links (netlify redirects for client-side history / pushstate)

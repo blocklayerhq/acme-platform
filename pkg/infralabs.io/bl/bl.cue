@@ -5,14 +5,15 @@ import (
 )
 
 Workspace :: {
+	domain: string
 	name: string
 	keychain <Key>: _
+	components <Name>: Component
 }
 
 Component :: {
 	name: string
-	address: string
-	slug: strings.Replace(address, "-", "_", -1)
+	address <Name>: Address
 	description?: string
 
 	// Component-specific authentication secrets
@@ -24,8 +25,8 @@ Component :: {
 		fromDir: *"/"|string
 	}
 	output: TreeChecksum
-	_address=address
-	subcomponents <Name>: _
+	// Sub-components
+	components <Name>: _
 	install: {
 		engine: *[0, 0, 3] | [...int]
 		packages <Pkg>: {
@@ -39,14 +40,17 @@ Component :: {
 	pull?: string
 	assemble?: string
 	push?: string
-
-	treeDepth: int|*1
-	_treeDepth= treeDepth
-	treeText: """
-		\("\t"*treeDepth)\(name):
-		\(strings.Join([(sub & {treeDepth:_treeDepth, ...}).treeText for _, sub in subcomponents], "\n"))
-		"""
 	...
 }
 
 TreeChecksum :: string & =~"^sha256:[0-9a-fA-F]{64}$"
+
+
+Address: {
+	description: string
+	// FIXME: this is a crude approximation of a regexp for allowed hostnames,
+	// not the real thing
+	host: string & =~#"^[a-zA-Z0-9\-\.]+$"#
+	slug: strings.Replace(strings.Replace(host, ".", "-", -1), "_", "-", -1)
+}
+

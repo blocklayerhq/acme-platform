@@ -1,28 +1,30 @@
-package myblconfig
-
 import (
-	"acme.infralabs.io/acmeclothing"
+	"acme.infralabs.io/acme/clothing"
 )
 
-
-// FIXME: move this to core bl
-env <Addr>: {
-	address: Addr
-	components <C>: {
-		name: C
-	}
-}
-
-env "acme.infralabs.io": {
-	components "acme-clothing": acmeclothing.AcmeClothing & {
-		subcomponents: {
-			api subcomponents: {
-				container settings registry: "gcp.io/deploy-test-231020"
-				db settings host: {
+workspace "acme.infralabs.io" prod: {
+	components: {
+		"acme-clothing": {
+			blueprint: "acme.infralabs.io/clothing"
+			// FIXME: subcomponents settings should be grouped under the parent settings,
+			// so that the user/installer does not need to overlay the .components field,
+			// (it's confusing because we're installing some components and configuring
+			// others with similar syntax)
+			components: {
+				"api/container" settings registry: "gcp.io/deploy-test-231020"
+				"api/db" settings host: {
 					public: "34.94.9.17"
 					private: "10.32.225.3"
 				}
 			}
 		}
+	}
+}
+
+/* GENERATED GLUE BELOW */
+
+workspace "acme.infralabs.io" prod components: {
+	"acme-clothing": clothing & {
+		...
 	}
 }

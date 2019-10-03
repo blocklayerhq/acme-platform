@@ -1,10 +1,6 @@
-package sql
+package bl
 
-import (
-	"blocklayerhq.com/bl"
-)
-
-Database: bl.Component & {
+Catalog mysql Database: {
 	auth: {
 		user: *"root"|string
 		password: string

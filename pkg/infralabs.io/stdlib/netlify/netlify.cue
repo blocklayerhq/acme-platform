@@ -1,6 +1,6 @@
-package netlify
+package bl
 
-Site: {
+Catalog netlify Site: {
 
 	auth: string
 
