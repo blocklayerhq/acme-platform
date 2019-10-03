@@ -4,16 +4,17 @@ import (
 	"blocklayerhq.com/bl"
 )
 
-component sql Database: bl.Component & {
+Database: bl.Component & {
+	auth: {
+		user: *"root"|string
+		password: string
+	}
+
 	settings: {
 		dbName: string
 		host: {
 			public: string
 			private: string
-		}
-		admin: {
-			user: *"root"|string
-			password: string
 		}
 	}
 
@@ -33,8 +34,8 @@ component sql Database: bl.Component & {
 			cat <<-EOF > tmp/sql.tf
 			provider "mysql" {
 				endpoint="\#(settings.host.public)"
-				username="\#(settings.admin.user)"
-				password="\#(settings.admin.password)"
+				username="\#(auth.user)"
+				password="\#(auth.password)"
 			}
 			resource "mysql_database" "\#(settings.dbName)" {
 				name = "\#(settings.dbName)"

@@ -4,14 +4,21 @@ import (
 	"strings"
 )
 
+Workspace :: {
+	name: string
+	keychain <Key>: _
+}
+
 Component :: {
 	name: string
 	address: string
 	slug: strings.Replace(address, "-", "_", -1)
-	description: string
+	description?: string
 
-	settings <Key>: _
-	info <Key>: _
+	// Component-specific authentication secrets
+	auth: _
+	settings <Name>: _
+	info <Name>: _
 	input?: {
 		from: Component
 		fromDir: *"/"|string
@@ -47,11 +54,3 @@ Component :: {
 		*/
 	...
 }
-
-// FIXME: is this applied?
-component <Name>: Component & { foo: int }
-
-env <Address>: Component & {
-	address: Address
-}
-

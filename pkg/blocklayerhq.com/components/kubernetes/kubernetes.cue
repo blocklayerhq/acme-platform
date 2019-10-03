@@ -5,10 +5,11 @@ import (
 	"blocklayerhq.com/bl"
 )
 
-kubernetes GKE Deployment: bl.Component & {
+GKE Deployment: bl.Component & {
+
+	auth: {}// FIXME: GKE key schema goes here
 
 	settings: {
-		auth: {} // FIXME: GKE key schema goes here
 		zone: *"us-west2a"|string
 		cluster: string
 		namespace: string
@@ -47,10 +48,8 @@ kubernetes GKE Deployment: bl.Component & {
 			echo "Generating Google Cloud configuration"
 			mkdir cache/gcloud
 			mkdir $CLOUDSDK_CONFIG
-			gcloud -q auth activate-service-account --key-file=<(cat <<EOF
-			\#(json.Marshal(settings.auth))
-			EOF)
-			gcloud -q config set project '\#(settings.auth.project_id)'
+			gcloud -q auth activate-service-account --key-file=<(cat <<EOF\#n\#(json.Marshal(auth))\#nEOF\#n)
+			gcloud -q config set project '\#(auth.project_id)'
 			gcloud -q config set compute/zone '\#(settings.zone)'
 		fi
 		# 2. Kubernetes-specific Google Cloud configuration

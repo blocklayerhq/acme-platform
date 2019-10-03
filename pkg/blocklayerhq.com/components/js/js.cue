@@ -4,7 +4,7 @@ import (
 	"blocklayerhq.com/components/linux"
 )
 
-js App: linux.alpine.AppContainer & {
+App: linux.alpine.AppContainer & {
 	settings: {
 		alpineVersion: [3, 10]
 		

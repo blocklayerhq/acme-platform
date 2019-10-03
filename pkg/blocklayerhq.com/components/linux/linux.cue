@@ -1,42 +1,48 @@
 package linux
 
 import (
+	"strconv"
+	"strings"
+
 	"blocklayerhq.com/bl"
 )
 
-linux alpine AppContainer: {
+alpine AppContainer: bl.Component & {
+
+	auth: _ // FIXME: provider-specific container registry credentials
+	// FIXME generate auth provider, and auth provider schema
 
 	settings: {
+		env <Key>: string
+		appDir? : *"/app"|string
+		appInstall?: string
 		pushTo: {
 			name: string
 			tag: *"latest"|string
 		}
 		alpineVersion: *[3]|[...int]
 		packages <Pkg>: {
-			postInstall?: [[string]]
+			postInstall?: [...[...string]]
 			installText: """
 				RUN apk add -U --no-cache \(Pkg)
-				\(strings.Join(["run " + strings.Join(cmd, " ") for cmd in Pkg.postInstall], "\n"))
+				\(strings.Join(["run " + strings.Join(cmd, " ") for cmd in postInstall], "\n"))
 				"""
 		}
 		packages npm: {
 			postInstall: [["npm", "install", "-g", npmPkg] for npmPkg, _ in npm.install]
 		}
-		/*
 		dockerfile: """
-			from alpine:\(strings.Join([strconv.ParseInt(n, 10, strconv.IntSize) for n in settings.alpineVersion]), ".")
-	
+			from alpine:\(strings.Join([strconv.FormatInt(n, 10) for n in settings.alpineVersion], "."))
 			# Install Alpine packages
 			\(strings.Join([pkg.installText for pkg in packages], "\n"))
-	
+			
 			# Copy app source into container
 			COPY . \(appDir)
 			WORKDIR \(appDir)
-			\([strings.Join(["ENV " + k + "=" + v,
+			\(strings.Join(["ENV " + k + "=" + v for k, v in settings.env], "\n"))
 			\(appInstall)
 			CMD \(cmd)
 			"""
-		*/
 	}
 
 	slug: _
@@ -53,22 +59,21 @@ linux alpine AppContainer: {
 			"gcloud-cli": {}
 			jq: {}
 		}
-		installCmd: #"""
-			docker-buildx inspect '\#(slug)' >/dev/null 2>&1 \
-		 	|| docker-buildx create --name '\#(slug)' --driver docker-container
-		 	"""#
+		installCmd: "docker-buildx inspect '\(slug)' >/dev/null 2>&1 || docker-buildx create --name '\(slug)' --driver docker-container"
 		removeCmd: "docker-buildx rm '\(slug)' || true"
 	}
 
 	assemble: """
-			\(_docker_build_def)
-			docker_build --load
+		\(_docker_build_def)
+		docker_build --load
 		"""
 
 	push: """
-			\(_docker_build_ref)
-			docker_build --push
+		\(_authenticate)
+		\(_docker_build_def)
+		docker_build --push
 		"""
+
 
 	_docker_build_def: #"""
 		# Common shell function for building
@@ -85,7 +90,7 @@ linux alpine AppContainer: {
 			docker-buildx use '\#(slug)'
 			docker-buildx build \
 				"${cacheArgs[@]}" \
-				-t '\#(settings.pushTo)' \
+				-t '\#(settings.pushTo.name):\#(settings.pushTo.tag)' \
 				-f "$dockerfile" \
 				"$@" \
 				input
@@ -93,6 +98,26 @@ linux alpine AppContainer: {
 		}
 		"""#
 
-	
 
+	_authenticate: #"""
+		case '\#(settings.pushTo.name)' in
+			gcr.io/*|*.gcr.io/*)
+				gcloud -q auth activate-service-account --key-file=<(cat <<EOF\#n\#(json.Marshal(auth))\#nEOF\#n)
+				gcloud -q config set project $(auth.project_id)
+				gcloud -q auth configure-docker
+			;;
+			*.amazonaws.com/*)
+				$(aws ecr get-login --no-include-email) \
+					AWS_ACCESS_KEY_ID='\#(auth["access-key"])' \
+					AWS_SECRET_ACCESS_KEY='\#(auth["secret-key"])' \
+					AWS_DEFAULT_REGION='\#(auth.region)'
+			;;
+			*)
+				docker login \
+					--username=$(getauth username) \
+					--password-stdin <<<$(getauth password) \
+					"$registry"
+			;;
+		esac
+		"""#
 }

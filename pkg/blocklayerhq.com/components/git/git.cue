@@ -4,7 +4,7 @@ import (
 	"blocklayerhq.com/bl"
 )
 
-component git Repo: bl.Component & {
+Repo: bl.Component & {
 
 	settings: {
 		url: string

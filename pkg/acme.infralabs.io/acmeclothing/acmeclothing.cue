@@ -18,6 +18,8 @@ package acmeclothing
 //		staging tree can model organization tree.
 
 import (
+	"encoding/yaml"
+
 	"blocklayerhq.com/bl"
 	"blocklayerhq.com/components/git"
 	"blocklayerhq.com/components/js"
@@ -31,6 +33,8 @@ import (
 ntlfy=netlify.Site
 
 AcmeClothing : bl.Component & {
+	address: _
+
 	subcomponents: {
 		monorepo: git.Repo & {
 			settings: {
@@ -39,7 +43,6 @@ AcmeClothing : bl.Component & {
 		}
 
 		web: {
-			_address=address
 			description: "Acme Clothing web frontend"
 			subcomponents: {
 				app: js.App & {
@@ -55,7 +58,7 @@ AcmeClothing : bl.Component & {
 							envFile: ".env"
 							env: {
 								NODE_ENV: "production"
-								APP_URL: "https://\(_address)"
+								APP_URL: "https://\(address)"
 								APP_URL_API: "https://\(api.address)"
 							}
 						}
@@ -64,18 +67,20 @@ AcmeClothing : bl.Component & {
 				netlify: ntlfy.Site & {
 					input from: app
 					settings: {
-						siteName: string|*_address
-						customDomain: _address
+						siteName: string|*address
+						customDomain: address
 					}
 				}
 			}
 		}
 
 		api: {
-			address: *"api.\(_address)"|string
+			address: *"api.\(AcmeClothing.address)"|string
+			slug: _
 			description: "Acme Clothing API backend"
 			subcomponents: {
 				container: linux.alpine.AppContainer & {
+					slug: _
 					input: {
 						from: monorepo
 						fromDir: "code/api"
@@ -84,7 +89,7 @@ AcmeClothing : bl.Component & {
 					settings: {
 						registry: string
 						pushTo: {
-							name: "\(settings.registry)/\(api.slug)"
+							name: "\(settings.registry)/\(slug)"
 							tag: input.checksum
 						}
 						alpineVersion: [3, 10]
@@ -113,8 +118,9 @@ AcmeClothing : bl.Component & {
 					settings dbName: *api.slug|string
 				}
 				kube: kubernetes.GKE.Deployment & {
+					slug: _
 					settings: {
-						namespace: *api.slug|string
+						namespace: *slug|string
 						// FIXME: importing raw yaml for speed, but ideally convert to native cue
 						resources: [
 							yaml.Unmarshal("""
@@ -209,8 +215,8 @@ AcmeClothing : bl.Component & {
 									stringData:
 									  json: '
 										{
-											username: "\(db.settings.admin.user)",
-											password: "\(db.settings.admin.password)",
+											username: "\(db.auth.user)",
+											password: "\(db.auth.password)",
 											database: "\(db.settings.dbName)",
 											host: "\(db.settings.host.public)",
 											dialect: "mysql",
