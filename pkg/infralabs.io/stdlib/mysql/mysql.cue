@@ -1,13 +1,16 @@
-package bl
+package mysql
 
-Catalog mysql Database: {
+mysql: {
+
+	slug: _
+
 	auth: {
 		user: *"root"|string
 		password: string
 	}
 
 	settings: {
-		dbName: string
+		dbName: *slug|string
 		host: {
 			public: string
 			private: string
@@ -51,6 +54,4 @@ Catalog mysql Database: {
 		# FIXME: inject SQL data into the database,
 		# for example for test fixtures
 		"""
-
 }
-

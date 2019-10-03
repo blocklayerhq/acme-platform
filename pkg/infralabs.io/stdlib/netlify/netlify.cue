@@ -1,12 +1,15 @@
-package bl
+package netlify
 
-Catalog netlify Site: {
+netlify: {
+
+	slug: _ // Use the slug as default site name
+	address: _ // Use the slug as default custom domain
 
 	auth: string
 
 	settings: {
-		siteName: string
-		customDomain: string
+		siteName: *slug|string
+		customDomain: *address|string
 		account: *""|string
 	}
 

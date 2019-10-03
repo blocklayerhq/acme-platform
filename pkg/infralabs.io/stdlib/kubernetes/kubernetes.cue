@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 )
 
+slug: _
+
 auth: {}// FIXME: GKE key schema goes here
 
 settings: {
 	zone: *"us-west2a"|string
 	cluster: string
-	namespace: string
+	namespace: *slug|string
 }
 
 install: {
