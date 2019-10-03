@@ -18,19 +18,25 @@ package acmeclothing
 //		staging tree can model organization tree.
 
 import (
-	"encoding/yaml"
 
 	"blocklayerhq.com/bl"
+
+	// Monorepo
 	"blocklayerhq.com/components/git"
-	"blocklayerhq.com/components/js"
-	"blocklayerhq.com/components/linux"
+
+	// API
+	"encoding/yaml"
+ 	"blocklayerhq.com/components/linux"
 	"blocklayerhq.com/components/kubernetes"
-	"blocklayerhq.com/components/netlify"
 	"blocklayerhq.com/components/sql"
+
+	// Web frontend
+	"blocklayerhq.com/components/js"
+	"blocklayerhq.com/components/netlify"
 )
 
 // Use an alias for the netlify package to avoid name conflicts
-ntlfy=netlify.Site
+ntlfy=netlify
 
 AcmeClothing : bl.Component & {
 	address: _
@@ -41,13 +47,12 @@ AcmeClothing : bl.Component & {
 				url: "https://github.com/atulmy/crate.gi"
 			}
 		}
-
 		web: {
 			description: "Acme Clothing web frontend"
 			subcomponents: {
 				app: js.App & {
 					input: {
-						from: monorepo
+						from: monorepo.output
 						fromDir: "code/web"
 					}
 					settings: {
@@ -65,7 +70,7 @@ AcmeClothing : bl.Component & {
 					}
 				}
 				netlify: ntlfy.Site & {
-					input from: app
+					input from: app.output
 					settings: {
 						siteName: string|*address
 						customDomain: address
@@ -82,15 +87,14 @@ AcmeClothing : bl.Component & {
 				container: linux.alpine.AppContainer & {
 					slug: _
 					input: {
-						from: monorepo
+						from: monorepo.output
 						fromDir: "code/api"
-						checksum: _
 					}
 					settings: {
 						registry: string
 						pushTo: {
 							name: "\(settings.registry)/\(slug)"
-							tag: input.checksum
+							tag: input.from
 						}
 						alpineVersion: [3, 10]
 						packages: {

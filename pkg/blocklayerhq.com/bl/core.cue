@@ -20,15 +20,12 @@ Component :: {
 	settings <Name>: _
 	info <Name>: _
 	input?: {
-		from: Component
+		from: TreeChecksum
 		fromDir: *"/"|string
-		checkskum: *""|string
 	}
+	output: TreeChecksum
 	_address=address
-	subcomponents <Name>: /*Component & */ { // FIXME infinite recursion
-		address: *_address|string
-		...
-	}
+	subcomponents <Name>: _
 	install: {
 		engine: *[0, 0, 3] | [...int]
 		packages <Pkg>: {
@@ -54,3 +51,5 @@ Component :: {
 		*/
 	...
 }
+
+TreeChecksum :: string & =~"^sha256:[0-9a-fA-F]{64}$"
