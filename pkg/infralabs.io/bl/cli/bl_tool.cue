@@ -1,6 +1,6 @@
 import (
-	"strings"
-	"tool/cli"
+	// "strings"
+	// "tool/cli"
 	// "tool/exec"
 )
 
@@ -26,31 +26,6 @@ command "env-create": {
 
 command "env-inspect": {
 	description: "Show information about a staging environment"
-
-	var: {
-		envAddr: "acme.infralabs.io"
-		_env: env[envAddr]
-	}
-
-	task print: cli.Print & {
-		text: """
-			address: \(var.envAddr)
-			components:
-			\(strings.Join([c.treeText for _, c in var._env.components], "\n"))
-			input: <INSERT checksum here>
-			output: <INSERT checksum here>
-			settings:
-			\(strings.Join(["\t" + c for c, _ in var._env.settings|{}], "\n"))
-			info:
-			\(strings.Join(["\t" + c for c, _ in var._env.info|{}], "\n"))
-			staged changes:
-				...
-				<INSERT DIFF HERE>
-				...
-			last deploy ID: 42
-			last deploy time: 2 hours ago
-			"""
-	}
 }
 
 command "env-destroy": {

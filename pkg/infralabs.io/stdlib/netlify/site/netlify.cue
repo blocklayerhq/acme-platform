@@ -1,6 +1,6 @@
-package netlify
+package site
 
-netlify: {
+site: {
 
 	slug: _ // Use the slug as default site name
 	address: _ // Use the slug as default custom domain
@@ -22,11 +22,11 @@ netlify: {
 
 	install: {
 		packages: {
-			rsync: {}
-			yarn packages: {
-				"netlify-cli": {}
+			rsync: true
+			yarn: {
+				"netlify-cli": true
 			}
-			jq: {}
+			jq: true
 		}
 		installCmd: #"""
 			site_id=$(

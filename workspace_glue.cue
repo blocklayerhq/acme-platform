@@ -1,8 +1,12 @@
 import (
 	"strings"
 
-	"acme.infralabs.io/acme/clothing"
-	"infralabs.io/stdlib/linux/alpine/container"
+	acmeClothing "acme.infralabs.io/acme/clothing"
+	mysqlDatabase "infralabs.io/stdlib/mysql/database"
+	jsApp "infralabs.io/stdlib/js/app"
+	jsContainer "infralabs.io/stdlib/js/container"
+	netlifySite "infralabs.io/stdlib/netlify/site"
+	kubernetesGke "infralabs.io/stdlib/kubernetes/gke"
 )
 
 
@@ -11,14 +15,16 @@ import (
 bl: { // Placeholder for `import ("infralabs.io/bl")`
 Workspace :: {
 	domain: string
-	name: string
+	env: string
 	keychain <Key>: _
 	components <Name>: Component
 }
 
 Component :: {
 	name: string
-	address <Name>: Address
+	blueprint: string
+	address: Hostname
+	slug: strings.Replace(strings.Replace(address, ".", "-", -1), "_", "-", -1)
 	description?: string
 
 	// Component-specific authentication secrets
@@ -33,53 +39,50 @@ Component :: {
 	}
 	output: TreeChecksum
 	// Sub-components
-	components <Name>: _
+	components <Name>: {
+		name: Name
+		...
+	}
 	install: {
 		engine: *[0, 0, 3] | [...int]
-		packages <Pkg>: {
-			installText: """
-
-				"""
-		}
+		packages <Pkg>: true|{<SubPkg>: true} // Copied from `alpine/linux/container`. 
 		installCmd?: string
 		removeCmd?: string
 	}
 	pull?: string
 	assemble?: string
 	push?: string
-	...
 }
 
 TreeChecksum :: string & =~"^sha256:[0-9a-fA-F]{64}$"
+Hostname: string & =~#"^[a-zA-Z0-9\-\.]+$"# // FIXME: approximation of hostname regexp
+
+} // end of placeholder for `import ("infralabs.io/bl")`
 
 
-Address: {
-	description: string
-	// FIXME: this is a crude approximation of a regexp for allowed hostnames,
-	// not the real thing
-	host: string & =~#"^[a-zA-Z0-9\-\.]+$"#
-	slug: strings.Replace(strings.Replace(host, ".", "-", -1), "_", "-", -1)
-}
+/* PART 2: COMMON GLUE */
 
-
-workspace <Addr> <Env>: bl.Workspace & {
-	address: *Addr|Address
+workspace <Domain> <Env>: bl.Workspace & {
+	domain: *Domain|Hostname
 	env: Env
-	name: Name
-	components <C>: bl.Component
+	components <C>: bl.Component & {
+		name: C
+		address: *Domain|Hostname
+	}
 }
 
-address <Name>: bl.Address
-}
 
 
-
-/* PART 2: APP-SPECIFIC GENERATED GLUE BELOW */
+/* PART 3: APP-SPECIFIC GENERATED GLUE */
 
 workspace "acme.infralabs.io" prod components: {
-	"acme-clothing": clothing & {
+	"acme-clothing": acmeClothing.clothing & {
 		components: {
-			"api/container": container & {...}
+			"api/container": bl.Component & jsContainer.container
+			"api/db": bl.Component & mysqlDatabase.database
+			"api/kube": bl.Component & kubernetesGke.gke
+			"web/netlify": bl.Component & netlifySite.site
+			"web/app": bl.Component & jsApp.app
 		}
 	}
 }

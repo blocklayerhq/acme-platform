@@ -1,6 +1,6 @@
-package mysql
+package database
 
-mysql: {
+database: {
 
 	slug: _
 
