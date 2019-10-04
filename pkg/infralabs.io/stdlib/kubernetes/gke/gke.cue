@@ -17,10 +17,10 @@ gke: {
 	
 	install: {
 		packages: {
-			"gcloud-cli": {}
-			"shopify-kubernetes-deploy": {}
-			"kubectl": {}
-			"jq": {}
+			"gcloud-cli": true
+			"shopify-kubernetes-deploy": true
+			"kubectl": true
+			"jq": true
 		}
 		installCmd: #"""
 			\#(_scripts.googlAuth)

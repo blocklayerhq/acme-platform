@@ -23,10 +23,9 @@ site: {
 	install: {
 		packages: {
 			rsync: true
-			yarn: {
-				"netlify-cli": true
-			}
+			yarn: true
 			jq: true
+			"netlify-cli": true
 		}
 		installCmd: #"""
 			site_id=$(

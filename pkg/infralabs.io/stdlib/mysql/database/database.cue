@@ -20,7 +20,7 @@ database: {
 	install: {
 		engine: [0, 0, 3]
 		packages: {
-			terraform: {}
+			terraform: true
 		}
 
 		installCmd: #"""

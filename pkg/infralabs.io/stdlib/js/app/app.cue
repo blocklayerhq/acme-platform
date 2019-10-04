@@ -40,8 +40,8 @@ app: {
 	install: {
 		engine: [0, 0, 3] // Install on alpha 3 engine
 		packages: {
-			npm: {}
-			rsync: {}
+			npm: true
+			rsync: true
 		}
 	}
 }

@@ -28,7 +28,7 @@ assemble: #"""
 install: {
 	engine: [0, 0, 3]
 	packages: {
-		git: {}
-		"openssh-client": {}
+		git: true
+		"openssh-client": true
 	}
 }

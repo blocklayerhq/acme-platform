@@ -31,15 +31,15 @@ container: {
 			settings: {
 				alpineVersion: [3, 10]
 				packages: {
-					npm: {
-						nodemon: true
-						"babel-cli": true
-					}
+					npm: true
 					gcc: true
 					"g++": true
 					make: true
 					python: true
 				}
+				postinstall: [
+					["npm", "install", "-g", "nodemon", "babel-cli"]
+				]
 				appRun: [container.settings.tool, "run", container.settings.run.script]
 			}
 		}

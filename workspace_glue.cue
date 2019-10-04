@@ -7,6 +7,7 @@ import (
 	jsContainer "infralabs.io/stdlib/js/container"
 	netlifySite "infralabs.io/stdlib/netlify/site"
 	kubernetesGke "infralabs.io/stdlib/kubernetes/gke"
+	linuxContainer "infralabs.io/stdlib/linux/container"
 )
 
 
@@ -18,6 +19,7 @@ Workspace :: {
 	env: string
 	keychain <Key>: _
 	components <Name>: Component
+	containers <Name>: linuxContainer.container
 }
 
 Component :: {
@@ -45,13 +47,33 @@ Component :: {
 	}
 	install: {
 		engine: *[0, 0, 3] | [...int]
-		packages <Pkg>: true|{<SubPkg>: true} // Copied from `alpine/linux/container`. 
+		packages <Pkg>: true
 		installCmd?: string
 		removeCmd?: string
+		// YOU ARE HERE:
+		// 1. Eval crash is caused by "Component &" below
+		// 2. Flatten components: no more subcomponent nesting
+		// 3. Replace app-specific components (like acme-clothing) with shareable workspace templates
+		// 4. Rename components to gates
+		// 5. gate <Name>: {
+		//    	input: { from: LocalSource|PullSource, digest:_}
+		//    	output: { to: LocalTarget|PushTarget, digest:_ }
+		//	  }
+		// 6. gate <Name> : {
+		//		// fetch latest input from source (if remote: download; if local: recursively pull)
+		//		action pull: Command 
+		//		// process current input and produce new output (alt: "action process")
+		//		action run Command 
+		//		// send current output to target (if remote: upload; if local: recursively push)
+		//		action push: Command
+		//	  }
+		// 7. RemoteSource :: { address: string }
+		// 8. gate <Name> target: Hostname // 
 	}
 	pull?: string
 	assemble?: string
 	push?: string
+
 }
 
 TreeChecksum :: string & =~"^sha256:[0-9a-fA-F]{64}$"
@@ -68,6 +90,11 @@ workspace <Domain> <Env>: bl.Workspace & {
 	components <C>: bl.Component & {
 		name: C
 		address: *Domain|Hostname
+	}
+	containers: {
+		for name, component in components {
+			"\(name)" settings packages: component.install.packages
+		}
 	}
 }
 
