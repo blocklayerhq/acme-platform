@@ -5,11 +5,11 @@ import (
 )
 
 clothing: {
-	address: _
 	gates: _
 	container=gates["api/container"]
 	db=gates["api/db"]
-	
+	settings: _
+
 	gates "api/kube" settings resources: [
 		// FIXME: importing raw yaml for speed, but ideally convert to native cue
 		/* FIXME
@@ -25,10 +25,10 @@ clothing: {
 			spec:
 				tls:
 				- hosts:
-					- \(address.api.host)
+					- \(settings.apiAddress)
 					secretName: api-tls
 				rules:
-				- host: \(address.api.slug)
+				- host: \(clothing.settings.apiAddress)
 					http:
 					paths:
 						- path: /

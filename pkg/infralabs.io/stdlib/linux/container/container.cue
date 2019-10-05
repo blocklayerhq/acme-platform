@@ -5,12 +5,8 @@ import (
 )
 
 container: alpineLinuxContainer.container & {
-	package <vpkg>: true
-
-	// Always install bash
-	package bash: true
-
 	settings: {
+		packages <vpkg>: true
 		alpineVersion: [3, 9, 4]
 		alpineDigest: "sha256:769fddc7cc2f0a1c35abb2f91432e8beecf83916c421420e6a6da9f8975464b6"
 		appDir: "/workspace"

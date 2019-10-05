@@ -7,7 +7,11 @@ import (
 gke: {
 	slug: _
 	
-	auth: {}// FIXME: GKE key schema goes here
+	auth: {
+			type: string
+			project_id: string
+			...
+	}// FIXME: GKE key schema goes here
 	
 	settings: {
 		zone: *"us-west2a"|string
@@ -23,7 +27,7 @@ gke: {
 			"jq": true
 		}
 		installCmd: #"""
-			\#(_scripts.googlAuth)
+			\#(_scripts.googleAuth)
 			kubectl create ns $namespace || true
 		"""#
 		removeCmd: #"""
@@ -34,9 +38,13 @@ gke: {
 	push: #"""
 		\#(_scripts.googleAuth)
 		REVISION=HEAD kubernetes-deploy \
-			--template-dir=input/ \
+			--template-dir=output/ \
 			'\#(settings.namespace)' \
 			"$(kubectl config current-context)"
+		"""#
+
+	run: #"""
+		echo FIXME: merge yaml files in input + generated yaml files from settings
 		"""#
 	
 	_scripts googleAuth: #"""

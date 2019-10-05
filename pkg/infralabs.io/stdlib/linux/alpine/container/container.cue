@@ -24,14 +24,15 @@ container: {
 	
 	settings: {
 		env <Key>: string
-		appDir? : *"/app"|string
-		appInstall?: [...[...string]]
+		appDir : *"/app"|string
+		appInstall: *[[]]|[...[...string]]
 		appRun?: [...string]
 		pushTo: {
 			prefix: string
 			name: *slug|string
-			_fullName: "\(settings.prefix)/\(settings.name)"
 			tag: *input.from|string
+
+			_fullName: "\(settings.prefix)/\(settings.name)"
 		}
 		alpineVersion: *[3]|[...int]
 		alpineDigest?: string
@@ -53,7 +54,7 @@ container: {
 				# Copy app source into container
 				COPY . \(settings.appDir)
 				# Set environment for app install and run
-				\(strings.Join(["ENV " + k + "=" + v for k, v in settings.env], "\n"))
+				\(env)
 				# Set workdir for app install and run
 				WORKDIR \(settings.appDir)
 				# Install app

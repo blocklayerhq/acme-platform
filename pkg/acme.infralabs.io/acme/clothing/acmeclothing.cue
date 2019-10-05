@@ -1,11 +1,12 @@
 package clothing
 
 // Workspace template
+
 clothing: {
 	// EXTERNAL REFERENCES
 	domain: _
 
-	// COMPONENT LAYOUT
+	// GATE LAYOUT
 	gates: {
 		monorepo blueprint: "git/repo"
 		"web/app" blueprint: "js/app"
@@ -16,7 +17,7 @@ clothing: {
 		"api/db" blueprint: "mysql/database"
 	}
 
-	// COMPONENT INTERCONNECT
+	// GATE INTERCONNECT
 	gates: {
 		"web/app" input: { from: gates.monorepo.output, fromDir: "code/web" }
 		"web/netlify" input from: gates["web/app"].output
@@ -74,7 +75,7 @@ clothing: {
 		}
 	}
 
-	// COMPONENT ADDRESS
+	// GATE ADDRESS
 	gates: {
 		"web/app" address: webAddr
 		"web/netlify" address: webAddr
