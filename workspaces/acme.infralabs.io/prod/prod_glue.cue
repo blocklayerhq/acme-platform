@@ -3,11 +3,12 @@ import (
 
 	acmeClothing "acme.infralabs.io/acme/clothing"
 	mysqlDatabase "infralabs.io/stdlib/mysql/database"
+	gitRepo "infralabs.io/stdlib/git/repo"
 	jsApp "infralabs.io/stdlib/js/app"
-	jsContainer "infralabs.io/stdlib/js/container"
 	netlifySite "infralabs.io/stdlib/netlify/site"
 	kubernetesGke "infralabs.io/stdlib/kubernetes/gke"
 	linuxContainer "infralabs.io/stdlib/linux/container"
+	linuxAlpineContainer "infralabs.io/stdlib/linux/alpine/container"
 )
 
 
@@ -15,21 +16,43 @@ import (
 
 bl: { // Placeholder for `import ("infralabs.io/bl")`
 Workspace :: {
+	template: string
 	domain: string
 	env: string
+	settings <Key>: _
 	keychain <Key>: _
-	components <Name>: Component
+
+	// Fill in gates
+	gates <Name>: {
+		name: Name
+		address: *domain|string
+	}
+
+	// Fill in address lookup table
+	addresses <T> <C>: Gate
+	addresses: {
+		for _, c in gates {
+			"\(c.address)" "\(c.name)": c
+		}
+	}
+
+	// Configure a container to run each component
 	containers <Name>: linuxContainer.container
+	containers: {
+		for name, component in gates {
+			"\(name)" settings packages: component.install.packages
+		}
+	}
 }
 
-Component :: {
+Gate :: {
 	name: string
 	blueprint: string
 	address: Hostname
 	slug: strings.Replace(strings.Replace(address, ".", "-", -1), "_", "-", -1)
 	description?: string
 
-	// Component-specific authentication secrets
+	// Gate-specific authentication secrets
 	auth: _
 	settings <Name>: _
 	info: {
@@ -40,21 +63,16 @@ Component :: {
 		fromDir: *"/"|string
 	}
 	output: TreeChecksum
-	// Sub-components
-	components <Name>: {
-		name: Name
-		...
-	}
 	install: {
 		engine: *[0, 0, 3] | [...int]
 		packages <Pkg>: true
 		installCmd?: string
 		removeCmd?: string
 		// YOU ARE HERE:
-		// 1. Eval crash is caused by "Component &" below
-		// 2. Flatten components: no more subcomponent nesting
-		// 3. Replace app-specific components (like acme-clothing) with shareable workspace templates
-		// 4. Rename components to gates
+		// 1. [DONE] Eval crash is caused by "Gate &" below
+		// 2. [...] Flatten gates: no more subcomponent nesting
+		// 3. [...] Replace app-specific gates (like acme-clothing) with shareable workspace templates
+		// 4. Rename gates to gates
 		// 5. gate <Name>: {
 		//    	input: { from: LocalSource|PullSource, digest:_}
 		//    	output: { to: LocalTarget|PushTarget, digest:_ }
@@ -64,11 +82,11 @@ Component :: {
 		//		action pull: Command 
 		//		// process current input and produce new output (alt: "action process")
 		//		action run Command 
-		//		// send current output to target (if remote: upload; if local: recursively push)
+		//		// send current output to pushTarget (if remote: upload; if local: recursively push)
 		//		action push: Command
 		//	  }
 		// 7. RemoteSource :: { address: string }
-		// 8. gate <Name> target: Hostname // 
+		// 8. gate <Name> address: Hostname // 
 	}
 	pull?: string
 	assemble?: string
@@ -87,30 +105,20 @@ Hostname: string & =~#"^[a-zA-Z0-9\-\.]+$"# // FIXME: approximation of hostname 
 workspace <Domain> <Env>: bl.Workspace & {
 	domain: *Domain|Hostname
 	env: Env
-	components <C>: bl.Component & {
-		name: C
-		address: *Domain|Hostname
-	}
-	containers: {
-		for name, component in components {
-			"\(name)" settings packages: component.install.packages
-		}
-	}
 }
-
 
 
 /* PART 3: APP-SPECIFIC GENERATED GLUE */
 
-workspace "acme.infralabs.io" prod components: {
-	"acme-clothing": acmeClothing.clothing & {
-		components: {
-			"api/container": bl.Component & jsContainer.container
-			"api/db": bl.Component & mysqlDatabase.database
-			"api/kube": bl.Component & kubernetesGke.gke
-			"web/netlify": bl.Component & netlifySite.site
-			"web/app": bl.Component & jsApp.app
-		}
+workspace "acme.infralabs.io" prod: acmeClothing.clothing & {
+	gates: {
+		"monorepo": bl.Gate & gitRepo.repo
+		"api/app": bl.Gate & jsApp.app
+		"api/container": bl.Gate & linuxAlpineContainer.container
+		"api/db": bl.Gate & mysqlDatabase.database
+		"api/kube": bl.Gate & kubernetesGke.gke
+		"web/netlify": bl.Gate & netlifySite.site
+		"web/app": bl.Gate & jsApp.app
 	}
 }
 

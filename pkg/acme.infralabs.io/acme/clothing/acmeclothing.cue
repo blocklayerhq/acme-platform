@@ -1,34 +1,41 @@
 package clothing
 
+// Workspace template
 clothing: {
+	// EXTERNAL REFERENCES
+	domain: _
 
-	address: _
-	slug: _
-	
+	// COMPONENT LAYOUT
+	gates: {
+		monorepo blueprint: "git/repo"
+		"web/app" blueprint: "js/app"
+		"web/netlify" blueprint: "netlify/site"
+		"api/app" blueprint: "js/app"
+		"api/container" blueprint: "linux/alpine/container"
+		"api/kube" blueprint: "kubernetes/gke"
+		"api/db" blueprint: "mysql/database"
+	}
+
+	// COMPONENT INTERCONNECT
+	gates: {
+		"web/app" input: { from: gates.monorepo.output, fromDir: "code/web" }
+		"web/netlify" input from: gates["web/app"].output
+		"api/app" input: { from: gates.monorepo.output, fromDir: "code/api" }
+		"api/container" input from: gates["api/app"].output
+	}
+
+	// SETTINGS
 	settings: {
-		apiAddress: *"api.\(address)"|string
+		webAddress: *domain|string
+		apiAddress: *"api.\(webAddress)"|string
 	}
-	
-	components: {
-		"api/container" address: settings.apiAddress
-		"api/db" address: settings.apiAddress
-		"api/kube" address: settings.apiAddress
-	}
+	// Convenience alias
+	apiAddr=settings.apiAddress
+	webAddr=settings.webAddress
 
-	components: {
-		"monorepo": {
-			blueprint: "git/repo"
-			settings: {
-				url: "https://github.com/atulmy/crate.gi"
-			}
-		}
-	
+	gates: {
+		"monorepo" settings url: "https://github.com/atulmy/crate.gi"
 		"web/app": {
-			blueprint: "js/app"
-			input: {
-				from: components.monorepo.output
-				fromDir: "code/web"
-			}
 			settings build: {
 				tool: "npm"
 				script: "build:client"
@@ -36,35 +43,44 @@ clothing: {
 				envFile: ".env"
 				env: {
 					NODE_ENV: "production"
-					APP_URL: "https://\(address)"
-					APP_URL_API: "https://\(clothing.settings.apiAddress)"
+					APP_URL: "https://\(webAddr)"
+					APP_URL_API: "https://\(apiAddr)"
 				}
 			}
 		}
-		"web/netlify": {
-			blueprint: "netlify/site"
-			input from: components["web/app"].output
-		}
-		"api/container": {
-			blueprint: "js/container"
-			input: {
-				from: components.monorepo.output
-				fromDir: "code/api"
-			}
-			settings: {
+		"api/app" settings: {
+			build: {
 				tool: "npm"
-				build: {
-					script: "build:prod"
-					dir: "."
-				}
-				run: {
-					script: "start:server"
-					env NODE_ENV: "production"
-				}
+				script: "build:prod"
+				dir: "."
 			}
 		}
-	
-		"api/db" blueprint: "mysql/database"
-		"api/kube" blueprint: "kubernetes/gke"
+		"api/container" settings: {
+			alpineVersion: [3, 10]
+
+			systemPackages: {
+				npm: true
+				gcc: true
+				"g++": true
+				make: true
+				python: true
+			}
+			adhocPackages: [
+				["npm", "install", "-g", "nodemon"],
+				["npm", "install", "-g", "babel-cli"],
+			]
+			env NODE_ENV: "production"
+			appRun: ["npm", "run", "start:server"]
+		}
+	}
+
+	// COMPONENT ADDRESS
+	gates: {
+		"web/app" address: webAddr
+		"web/netlify" address: webAddr
+		"api/app" address: apiAddr
+		"api/container" address: apiAddr
+		"api/db" address: apiAddr
+		"api/kube" address: apiAddr
 	}
 }
