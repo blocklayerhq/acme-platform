@@ -1,0 +1,108 @@
+#!/bin/bash
+
+cmd=$1; subcmd=$2; shift 2; set -eu
+
+cuecmd() {
+	cmd="${1:-main}"
+	tmp="$(mktemp -d)"
+	echo --- cuecmd --- $tmp
+	cat > "$tmp/main_tool.cue"
+	ln -s "$tmp/main_tool.cue" "$tmp/main_tool_.cue"
+	cue vet "$tmp/*.cue"
+	cue cmd "$cmd" "$tmp/*.cue"
+}
+
+case $cmd in
+
+	env) case $subcmd in
+
+			list)
+				ls .bl/env
+			;;
+
+			inspect)
+				cue eval .bl/env/"$@"
+			;;
+
+			create)
+				env="${1:?unspecified env name}"
+				mkdir -p .bl/env
+				mkdir .bl/env/"$env"
+			;;
+
+			# alt. deploy
+			# Deploy current outputs to their respective targets
+			push) ;;
+
+			# Process inputs and produce new outputs for deployment
+			stage) ;;
+
+			# Fetch data from remote sources and update inputs
+			pull) ;;
+			blocks) ;;
+
+			update) ;;
+
+			configure) ;;
+
+#				data) ;;
+#
+#					in) ;;
+#
+#					out) ;;
+#
+#					private) ;;
+#
+#				code) ;;
+#
+#				settings) ;;
+#
+#				target) ;;
+#
+#				keychain) ;;
+
+			destroy)
+				env="${1:?unspecified env name}"
+				rm -fr .bl/env/"$env"
+			;;
+
+		esac ;;
+
+
+	block) case $subcmd in
+
+			list) ;;
+	
+			inspect) ;;
+	
+			search) ;;
+	
+			install) ;;
+	
+			update) ;;
+	
+			configure) ;;
+	
+			remove) ;;
+	esac ;;
+	
+
+
+	island) case $subcmd in
+
+		list) ;;
+
+		inspect) ;;
+
+		update) ;;
+
+		install) ;;
+
+		esac ;;
+
+	*)
+		echo >&2 unspecified command
+		exit 1
+	;;
+
+esac
