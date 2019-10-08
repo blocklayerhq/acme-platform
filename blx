@@ -1,108 +1,398 @@
 #!/bin/bash
 
-cmd=$1; subcmd=$2; shift 2; set -eu
+set -eu
 
-cuecmd() {
-	cmd="${1:-main}"
-	tmp="$(mktemp -d)"
-	echo --- cuecmd --- $tmp
-	cat > "$tmp/main_tool.cue"
-	ln -s "$tmp/main_tool.cue" "$tmp/main_tool_.cue"
-	cue vet "$tmp/*.cue"
-	cue cmd "$cmd" "$tmp/*.cue"
+blx() {
+	cmd=${1:-}; subcmd=${2:-}; shift 2 || true
+	
+	cuecmd() {
+		cmd="${1:-main}"
+		tmp="$(mktemp -d)"
+		echo --- cuecmd --- $tmp
+		cat > "$tmp/main_tool.cue"
+		ln -s "$tmp/main_tool.cue" "$tmp/main_tool_.cue"
+		cue vet "$tmp/*.cue"
+		cue cmd "$cmd" "$tmp/*.cue"
+	}
+	
+	case $cmd in
+	
+		env) case $subcmd in
+	
+				"")
+					cat <<EOF
+Usage: blx env COMMAND
+
+Manage Blocklayer staging environments
+
+	stage			Submit changes to deploy in an environment
+	deploy			Deploy all staged changes for an environment
+
+	list			Show a list of environments
+	configure		Change the configuration of an environment
+	components		Show a list of components installed on an environment
+	create			Create a new environment
+	inspect			Show information on an environment
+	update			Update an environment to the latest components and blueprint
+	destroy			Destroy an environment and its components
+EOF
+				;;
+
+				list)
+					ls .bl/env/byName | cat
+				;;
+	
+				inspect)
+					cue eval "$(envPath $@)/*.cue"
+				;;
+	
+				create)
+					name="${1:?unspecified name}"
+					mkdir -p .bl/env/byName
+					mkdir -p .bl/env/byId
+					if [ -e .bl/env/byName/"$name" ]; then
+						echo >&2 "Env $name already exists"
+						return 1
+					fi
+					id="$(uuidgen)"
+					ln -s ../byId/"$id" .bl/env/byName/"$name"
+					mkdir .bl/env/byId/"$id"
+					cat <<EOF > .bl/env/byId/"$id"/nameid.cue
+env byId "$id": {
+	id: "$id"
+	name: "$name"
 }
 
-case $cmd in
+env byName "$name": {
+	id: "$id"
+	name: "$name"
+}
 
-	env) case $subcmd in
+EOF
+				islandCompile
+				;;
 
-			list)
-				ls .bl/env
-			;;
+				# alt. deploy
+				# Deploy current outputs to their respective targets
+				push) ;;
+	
+				# Process inputs and produce new outputs for deployment
+				stage) ;;
+	
+				# Fetch data from remote sources and update inputs
+				pull) ;;
+				components) ;;
+	
+				update) ;;
+	
+				configure) ;;
+	
+	#				data) ;;
+	#
+	#					in) ;;
+	#
+	#					out) ;;
+	#
+	#					private) ;;
+	#
+	#				code) ;;
+	#
+	#				settings) ;;
+	#
+	#				target) ;;
+	#
+	#				keychain) ;;
+	
+				destroy)
+					envName="${1:?unspecified env name}"
+					# rm -fr "$(readlink .bl/env/byName/$envName}"
+					rm .bl/env/byName/"$envName"
+					islandCompile
+				;;
+	
+			esac ;;
+	
+	
+		component) case $subcmd in
+	
+				"")
+					cat <<EOF
+Usage: blx component COMMAND
 
-			inspect)
-				cue eval .bl/env/"$@"
-			;;
+Manage individual components of a staging environment
 
-			create)
-				env="${1:?unspecified env name}"
-				mkdir -p .bl/env
-				mkdir .bl/env/"$env"
-			;;
+	list			Show a list of installed components
+	inspect			Show information on an installed component
+	search			Search the catalog of available components
+	install			Install a new component in an environment
+	update			Update an installed component
+	configure		Change the configuration of an installed component
+	remove			Remove a component from an environment
+EOF
+				;;
 
-			# alt. deploy
-			# Deploy current outputs to their respective targets
-			push) ;;
+				list)
+					echo "ENV		BLOCK"
+					ls .bl/env/byName | {
+						while read envName; do
+							ls .bl/env/byName/"$envName"/components 2>/dev/null | {
+								while read componentName; do
+									echo "$envName		$componentName"
+								done
+							}
+						done
+					}
+				;;
+		
+				inspect) ;;
+		
+				search)
+					(
+						cd .bl/catalog/components 2>/dev/null || {
+							echo >&2 "component catalog not available. Your blx install may be broken"
+							return 1
+						}
+						find -type d *
+					)
+				;;
+		
+				install)
+					envName="${1:?unspecified env name}"
+					componentName="${2:?unspecified component name}"
+					componentSource="${3:?unspecified component source}"
 
-			# Process inputs and produce new outputs for deployment
-			stage) ;;
+					# Env must exist
+					if [ ! -e "$(envPath $envName)" ]; then
+						echo >&2 "No such env: $envName"
+						return 1
+					fi
+					
+					# Block must not exist
+					componentPath="$(envPath $envName)"/components/"$componentName" 
+					if [ -e "$componentPath" ]; then
+						echo >&2 "Block '$componentName' already installed in env '$envName'"
+						return 1
+					fi
+					mkdir -p "$(envPath $envName)/components"
 
-			# Fetch data from remote sources and update inputs
-			pull) ;;
-			blocks) ;;
+					# FIXME: we don't use the env ID for now but I don't want to lose this command for retrieving it
+					# envId=$(basename $(readlink .bl/env/byName/"$envName") | tr -d - | tr '[:upper:]' '[:lower:]')
 
-			update) ;;
+					# Create template component
+					componentConfig=$(mktemp)
+					cat >"$componentConfig" <<EOF
 
-			configure) ;;
+env byId $envId components "$componentName": {
+	blueprint: "$componentSource"
 
-#				data) ;;
-#
-#					in) ;;
-#
-#					out) ;;
-#
-#					private) ;;
-#
-#				code) ;;
-#
-#				settings) ;;
-#
-#				target) ;;
-#
-#				keychain) ;;
+	settings: {
+		// Env-specific component settings here
+	}
+}
+EOF
+					"${EDITOR:-vim}" "$componentConfig" && mkdir "$componentPath" && mv "$componentConfig" "$componentPath/config.cue"
+					islandCompile
+				;;
 
-			destroy)
-				env="${1:?unspecified env name}"
-				rm -fr .bl/env/"$env"
-			;;
+		
+				update) ;;
+		
+				configure)
+					envName="${1:?unspecified env name}"
+					componentName="${2:?unspecified component name}"
 
+					# Copy component to temporary sandbox
+					componentPath="$(envPath $envName)"/components/"$componentName" 
+					componentConfig=$(mktemp)
+					cp "$componentPath" "$componentConfig"
+					"${EDITOR:-vim}" "$componentConfig" && mv "$componentConfig" "$componentPath"
+					islandCompile
+				;;
+						
+				remove)
+					envName="${1:?unspecified env name}"
+					componentName="${2:?unspecified component name}"
+
+					# Env must exist
+					if [ ! -e "$(envPath $envName)" ]; then
+						echo >&2 "No such env: $envName"
+						return 1
+					fi
+					# Block must exist
+					componentPath="$(envPath $envName)"/components/"$componentName" 
+					if [ ! -e "$componentPath" ]; then
+						echo >&2 "No such component '$componentName' in env '$envName'"
+						return 1
+					fi
+					rm -fr "$componentPath"
+					islandCompile
+				;;
 		esac ;;
 
+		"")
+			cat <<EOF
+blx: experimental blocklayer CLI
 
-	block) case $subcmd in
+Usage: blx [OPTIONS] COMMAND [ARGS...]
 
-			list) ;;
+	env			Manage staging environments
+	component	Manage the individual components of an environment
+	island		Manage the infrastructure running environments
+
+EOF
+			return
 	
-			inspect) ;;
+		;;
+
+		island)
+
+			case "$subcmd" in
+
+				"")
+					cat <<EOF
+blx island: manage the infrastructure running staging environments
+
+Usage: blx island [OPTIONS] COMMAND [ARGS...]
+
+	install		Install an island on the local machine
+	update		Update the island on the local machine
+	destroy		Destroy the island installed on the local machine, with all its data
+EOF
+				;;
+
+				install)
+					if [ -e .bl ]; then
+						echo >&2 "Island already installed on local machine"
+						return 1
+					fi
+					mkdir .bl
+					blx island update "$@"
+				;;
+
+				update)
+					# Do our best to "migrate" an incomplete install when possible
+					mkdir -p \
+						.bl \
+						.bl/engine \
+						.bl/env \
+						.bl/env/byName \
+						.bl/env/byId
+					# Install latest engine code
+					cat <<EOF > .bl/engine/api.cue
+engine: {
+	version: [0, 0, 3]
+	channel: "alpha"
+}
+
+env byName <envName>: {
+	name: envName
+}
+
+env byId <envId>: {
+	id: envId
+	name: _
+	target: string
+	settings <K>: _
+	keychain <K>: _
+
+	component <componentName>: {
+		// 1. To be completed by env operator
+		blueprint?: string
+		target: *env.target|string
+		settings <K>: _
+		auth?: _
+		input: {
+			from: string
+			fromDir: string
+			toDir: string
+		}
+		remotes: {
+			pullFrom: _
+			pushTo: _
+		}
+
+		// 2. To be completed by component author
+		actions: {
+			install?: string
+			remove?: string
+			pull?: string
+			package?: string
+			push?: string
+		}
+		info <K>: _
+
+		// 3. Helpers provided by the engine
+
+		// Helpers
+		name: componentName
+        slug: strings.Replace(strings.Replace(target, ".", "-", -1), "_", "-", -1)
+	}
+}
+
+EOF
+					islandCompile
+				;;
+
+				inspect)
+					islandCompile
+					(cd .bl/compiled && cue eval ./...)
+				;;
+
+				rawcue)
+					find .bl/compiled -name '*.cue' -exec sh -c "echo -----; echo {} ; echo ---- ; cat {}" ';'
+				;;
+
+				destroy)
+					rm -fr .bl
+				;;
+
+				*)
+					echo >&2 No such command: $cmd $subcmd
+					return 1
+				;;
+
+			esac ;;
+
+		*)
+			echo >&2 No such command: $cmd
+			return 1
+		;;
 	
-			search) ;;
-	
-			install) ;;
-	
-			update) ;;
-	
-			configure) ;;
-	
-			remove) ;;
-	esac ;;
-	
+	esac
+}
+
+islandCompile() {
+	package=${1:-bl}
+	compileDir=$(mktemp -d)
+	(
+		cd .bl && find engine env -name '*.cue'
+	) | {
+		while read -r cuePath; do
+			mkdir -p "$compileDir/$(dirname $cuePath)"
+			{
+				echo package $package
+				cat ".bl/$cuePath"
+			} > "$compileDir/$cuePath"
+		done
+		echo package $package > "$compileDir/$cuePath/root.cue"
+	}
+	(cd "$compileDir" && cue vet ./...)
+	cp -a "$compileDir/" .bl/compiled/
+}
 
 
-	island) case $subcmd in
+envPath() {
+	idOrName="${1:?unspecified ID or name}"
 
-		list) ;;
+	local byId=.bl/env/byId/"$idOrName"
+	local byName=.bl/env/byName/"$idOrName"
 
-		inspect) ;;
+	if [ -d "$byId" ]; then
+		echo "$byId"
+	elif [ -d "$byName" ]; then
+		echo "$byName"
+	fi
+}
 
-		update) ;;
 
-		install) ;;
-
-		esac ;;
-
-	*)
-		echo >&2 unspecified command
-		exit 1
-	;;
-
-esac
+blx "$@"
