@@ -4,14 +4,15 @@
 ## - consolidate each env into a single file
 ## - to inspect: eval a subset of the tree
 ## - to edit/configure: eval a subset, write to temp file, edit, merge back in
-## - move each command/subcommand into a function, for easier editing
+
+## - condolidate .bl/compiled into a single file
 
 set -eu
 
 blx() {
 	cmd=${1:-}; shift || true
 	case $cmd in
-		env|component|island|help)
+		env|component|island|inspect|get|help)
 			"blx$(cap $cmd)" "$@"
 			;;
 		"")
@@ -22,10 +23,19 @@ blx() {
 			;;
 	esac
 }
+
+blxInspect() {
+	cueEval .bl/compiled "$@"
+}
+
+blxGet() {
+	cueEval .bl/compiled "$@" | jq -r .
+}
+
 blxEnv() {
 	cmd=${1:-}; shift || true
 	case $cmd in
-		stage|deploy|list|configure|components|create|inspect|update|destroy)
+		stage|deploy|list|configure|components|create|update|destroy)
 			"blxEnv$(cap $cmd)" "$@"
 			;;
 		"")
@@ -39,7 +49,7 @@ blxEnv() {
 blxComponent() {
 	cmd=${1:-}; shift || true
 	case $cmd in
-		list|inspect|search|install|update|configure|remove)
+		list|search|install|update|configure|remove)
 			"blxComponent$(cap $cmd)" "$@"
 			;;
 		"")
@@ -53,7 +63,7 @@ blxComponent() {
 blxIsland() {
 	cmd=${1:-}; shift || true
 	case $cmd in
-		list|inspect|search|install|update|configure|remove)
+		install|update|destroy)
 			"blxIsland$(cap $cmd)" "$@"
 			;;
 		"")
@@ -94,7 +104,6 @@ blxEnvHelp() {
 			configure      Change the configuration of an environment
 			components     Show a list of components installed on an environment
 			create         Create a new environment
-			inspect        Show information on an environment
 			update         Update an environment to the latest components and blueprint
 			destroy        Destroy an environment and its components
 	EOF
@@ -104,31 +113,39 @@ blxEnvList() {
 	ls .bl/env | cat
 }
 
-blxEnvInspect() {
-	if [ $# -eq 0 ]; then
-		echo >&2 "unspecified env name"
+blxEnvCreate() {
+	env="${1:?unspecified name}"
+	mkdir -p .bl/env
+	if [ -e .bl/env/"$env" ]; then
+		echo >&2 "Env $env already exists"
 		return 1
 	fi
-	for env in "$@"; do
-			expr+=("env[\"$env\"]")
-	done
-	cueEval "${expr[@]}"
-}
+	tmp="$(mktemp -d)"
+	cat <<-EOF > "$tmp/name.cue"
+		env "$env": {
+			name: "$env"
+		}
+	EOF
+	cat <<-EOF > "$tmp/config.cue"
+		env "$env": {
 
-blxEnvCreate() {
-					name="${1:?unspecified name}"
-					mkdir -p .bl/env
-					if [ -e .bl/env/"$name" ]; then
-						echo >&2 "Env $name already exists"
-						return 1
-					fi
-					mkdir .bl/env/"$name"
-					cat <<-EOF > .bl/env/"$name"/name.cue
-					    env "$name": {
-						    name: "$name"
-					    }
-					EOF
-				compile
+		    // Target address goes here (eg. www.myapp.com)
+		    target: "localhost"
+
+		    keychain: {
+		        // Env-specific passwords & keys go here
+		    }
+
+		    settings: {
+		        // Env-specific settings go here
+		    }
+		}
+	EOF
+	"${EDITOR:-vim}" "$tmp/config.cue"
+	mkdir "$(envdir $env)"
+	cp -a "$tmp/" "$(envdir $env)/"
+	compile
+	echo >&2 "Successfully created env '$env'"
 }
 
 blxEnvDestroy() {
@@ -149,7 +166,6 @@ blxComponentHelp() {
 		Manage individual components of a staging environment
 		
 			list            Show a list of installed components
-			inspect         Show information on an installed component
 			search          Search the catalog of available components
 			install         Install a new component in an environment
 			update          Update an installed component
@@ -171,12 +187,6 @@ blxComponentList() {
 	}
 }
 
-blxComponentInspect() {
-	env="${1:?unspecified env name}"
-	component="${2:?unspecified component name}"
-	dir="$(componentdir $env $component)"
-}
-
 blxComponentSearch() {
 	(
 		cd .bl/catalog/component 2>/dev/null || {
@@ -187,43 +197,134 @@ blxComponentSearch() {
 	)
 }
 
-blxComponentUpdate() {
+# TODO: make all changes in a complete copy of .bl,
+# then validate it all, THEN copy the change back.
+# Later this can be a git merge to avoid conflicts etc.
+
+blxComponentInstall() {
+	env="${1:?unspecified env name}"
+	component="${2:?unspecified component name}"
+
+	tmp="$(mktemp -d)"
+	cp -a .bl/ "$tmp/.bl/"
+	echo >&2 "Staging change in $tmp"
+	# Everything inside the subprocess happens in the temp sandbox
+	(
+		cd "$tmp" # later this can be HOME=$tmp
+
+		# Env must exist
+		if [ ! -e "$(envdir $env)" ]; then
+			echo >&2 "No such env: $env"
+			return 1
+		fi
+
+		# Component must not exist
+		dir="$(componentdir $env $component)"
+		if [ -e "$dir" ]; then
+			echo >&2 "component '$component' already installed in env '$env'"
+			return 1
+		fi
+
+		# Create component dir
+		mkdir -p "$dir"
+
+		# Create placeholder user config (to be edited further by the user)
+		cat > "$dir/config.cue" <<-EOF
+			env "$env" component "$component": {
+
+				// Change this to the component blueprint to use
+				// To search for available component blueprints: "$0 component search"
+			    blueprint: ""
+
+			    settings: {
+			        // Env-specific component settings here
+			    }
+			}
+		EOF
+
+		# Copy the right blueprint from the catalog into the component config, then compile
+		updateComponent() {
+			env="${1:?unspecified env name}"
+			component="${2:?unspecified component name}"
+			dir="$(componentdir $env $component)"
+			blueprint="$(cueEval $dir env[\"$env\"].component[\"$component\"].blueprint | jq -r .)"
+			cp ".bl/catalog/component/$blueprint/blueprint.cue" "$dir/"
+		}
+
+		# Loop: edit config / compile, until it works or user gives up
+		while true; do
+			"${EDITOR:-vim}" "$dir/config.cue"
+			if updateComponent "$env" "$component" && compile; then
+				break
+			else
+				read -p "There were errors in the component configuration. Try again? [Yn] " rep
+				case rep in
+					Y|y|"") continue ;;
+					*) return 1;;
+				esac
+			fi
+		done
+
+	)
+
+	# Success! Copy the new configuration back
+	# FIXME: does cp -a sync remove files too? If not, use rsync
+	cp -a "$tmp/" ".bl/"
+
+	echo >&2 Successfully installed component '$component' in env '$env'
+}
+
+blxComponentInstallOld() {
 	env="${1:?unspecified env name}"
 	component="${2:?unspecified component name}"
 	blueprint="${3:?unspecified component source}"
 
-	# Env must exist
-	if [ ! -e "$(envdir $env)" ]; then
-		echo >&2 "No such env: $env"
-		return 1
-	fi
-	
-	# Component must not exist
-	dir="$(componentdir $env $component)"
-	if [ -e "$dir" ]; then
-		echo >&2 "Block '$component' already installed in env '$env'"
-		return 1
-	fi
 
 	# Create template component
-	tmp=$(mktemp)
-	cat >"$tmp" <<-EOF
+	tmp=$(mktemp -d)
+	cat >"$tmp/config.cue" <<-EOF
 		env $env component "$component": {
-			blueprint: "$blueprint"
 
-			settings: {
-				// Env-specific component settings here
-			}
+		    blueprint: "$blueprint"
+
+		    settings: {
+		        // Env-specific component settings here
+		    }
 		}
 	EOF
-	"${EDITOR:-vim}" "$tmp"
-	mkdir -p "$dir"
-	mv "$tmp" "$dir/config.cue"
 
-	# Install component blueprint from catalog
-	cueEval "env[\"$env\"].component[\"$component\"].blueprint"
+	compileComponent() {
+		dir="${1:?unspecified component dir}"
+		# Install component blueprint from catalog
+		blueprint="$(cueEval $tmp env[\"$env\"].component[\"$component\"].blueprint | jq -r .)"
+			cp ".bl/catalog/component/$blueprint/blueprint.cue" "$tmp/blueprint.cue"
+#
+# FIXME: switching to new implementation of blxComponentInstall
+#			if cueEval "$tmp" >/dev/null
+#			break
+#	done
+
+	}
+	while true; do
+			"${EDITOR:-vim}" "$tmp/config.cue"
+
+			if [ compileComponent "$tmp" ]; then
+				read -p "There were errors in the component configuration. Try again? [Yn] " rep
+				case rep in
+					Y|y|"") continue ;;
+					*) break ;;
+				esac
+			fi
+	done
+
+
+	mkdir -p "$dir"
+	cp -a "$tmp/" "$dir/"
+
 	compile
+	echo >&2 "Successfully installed component '$component' in env '$env'"
 }
+
 
 
 blxComponentConfigure() {
@@ -267,30 +368,24 @@ blxComponentRemove() {
 ##
 
 blxIslandHelp() {
-					cat <<-EOF
-						blx island: manage the infrastructure running staging environments
+	cat <<-EOF
+		blx island: manage the infrastructure running staging environments
 
-						Usage: blx island [OPTIONS] COMMAND [ARGS...]
+		Usage: blx island [OPTIONS] COMMAND [ARGS...]
 
-						    install     Install an island on the local machine
-						    update      Update the island on the local machine
-						    destroy     Destroy the island on the local machine, with all its data
-						EOF
-
+			install     Install an island on the local machine
+			update      Update the island on the local machine
+			destroy     Destroy the island on the local machine, with all its data
+		EOF
 }
 
 blxIslandInstall() {
-					if [ -e .bl ]; then
-						echo >&2 "Island already installed on local machine"
-						return 1
-					fi
-					mkdir .bl
-					blx island update "$@"
-
-}
-
-blxIslandInspect() {
-	cueEval
+	if [ -e .bl ]; then
+		echo >&2 "Island already installed on local machine"
+		return 1
+	fi
+	mkdir .bl
+	blx island update "$@"
 }
 
 blxIslandDestroy() {
@@ -298,102 +393,103 @@ blxIslandDestroy() {
 }
 
 blxIslandUpdate() {
-					# Do our best to "migrate" an incomplete install when possible
-					mkdir -p \
-						.bl \
-						.bl/engine \
-						.bl/env
-					# Install latest engine code
-					cat <<-EOF > .bl/engine/api.cue
-						import (
-						    "strings"
-						)
-						engine: {
-							version: [0, 0, 3]
-							channel: "alpha"
-						}
+	# Do our best to "migrate" an incomplete install when possible
+	mkdir -p \
+		.bl \
+		.bl/engine \
+		.bl/env
+	# Install latest engine code
+	cat <<-EOF > .bl/engine/api.cue
+		import (
+			"strings"
+		)
+		engine: {
+			version: [0, 0, 3]
+			channel: "alpha"
+		}
 
-						env <envName>: {
-							name: envName
-							target: string
-							settings <K>: _
-							keychain <K>: _
+		env <envName>: {
+			name: envName
+			target: string
+			settings <K>: _
+			keychain <K>: _
 
-							component <componentName>: {
-								// 1. To be completed by env operator
-								blueprint?: string
-								target: *env.target|string
-								settings <K>: _
-								auth?: _
-								input?: {
-									from: string
-									fromDir: string
-									toDir: string
-								}
-								remotes: {
-									pullFrom?: _
-									pushTo?: _
-								}
+			component <componentName>: {
+				// 1. To be completed by env operator
+				blueprint?: string
+				target: *env.target|string
+				settings <K>: _
+				auth?: _
+				input?: {
+					from: string
+					fromDir: string
+					toDir: string
+				}
+				remotes: {
+					pullFrom?: _
+					pushTo?: _
+				}
 
-								// 2. To be completed by component author
-								actions: {
-									install?: string
-									remove?: string
-									pull?: string
-									package?: string
-									push?: string
-								}
-								info <K>: _
+				// 2. To be completed by component author
+				actions: {
+					install?: string
+					remove?: string
+					pull?: string
+					package?: string
+					push?: string
+				}
+				info <K>: _
 
-								// 3. Helpers provided by the engine
+				// 3. Helpers provided by the engine
 
-								// Helpers
-								name: componentName
-								slug: strings.Replace(strings.Replace(target, ".", "-", -1), "_", "-", -1)
-							}
-						}
-						EOF
-						cat <<-'EOF' | updateCatalog component git/repo
-							catalog component "git/repo": {
-							    settings: {
-							    url: string
-							        ref: *"master"|string
-							    }
-	
-							    info: {
-							        commitID: string
-							        shortCommitID: string
-							    }
-	
-							    pull: #"""
-							        if [ ! -d cache/mirror]; then
-							            git clone --progress --mirror '\#(settings.url)' cache/mirror
-							        fi
-							        git -C cache/mirror remote update
-							        git clone --reference cache/mirror '\#(settings.url)' input/
-							        """#
-	
-							    assemble: #"""
-							        cp -a input/ output/
-							        git -C output/ reset --hard '\#(settings.ref)'
-							        git -C output/ rev-parse '\#(settings.ref)' > info/commitID
-							        git -C outputs/out rev-parse --short $(cat inputs/ref) > info/shortCommitID
-							        """#
-	
-							    install: {
-							        engine: [0, 0, 3]
-							        packages: {
-							            git: true
-							            "openssh-client": true
-							        }
-							    }
-							}
-						EOF
-					compile
+				// Helpers
+				name: componentName
+				slug: strings.Replace(strings.Replace(target, ".", "-", -1), "_", "-", -1)
+			}
+		}
+		EOF
+		cat <<-'EOF' | updateCatalog component git/repo
+			catalog component "git/repo": {
+				settings: {
+				url: string
+					ref: *"master"|string
+				}
+
+				info: {
+					commitID: string
+					shortCommitID: string
+				}
+
+				pull: #"""
+					if [ ! -d cache/mirror]; then
+						git clone --progress --mirror '\#(settings.url)' cache/mirror
+					fi
+					git -C cache/mirror remote update
+					git clone --reference cache/mirror '\#(settings.url)' input/
+					"""#
+
+				assemble: #"""
+					cp -a input/ output/
+					git -C output/ reset --hard '\#(settings.ref)'
+					git -C output/ rev-parse '\#(settings.ref)' > info/commitID
+					git -C outputs/out rev-parse --short $(cat inputs/ref) > info/shortCommitID
+					"""#
+
+				install: {
+					engine: [0, 0, 3]
+					packages: {
+						git: true
+						"openssh-client": true
+					}
+				}
+			}
+		EOF
+	compile
 
 }
 
 compile() {
+	echo -n >&2 "--- recompiling island config... "
 	sourcedirs=(engine env)
 	package=${1:-bl}
 	compileDir=$(mktemp -d)
@@ -409,9 +505,9 @@ compile() {
 		done
 		echo package $package > "$compileDir/$cuePath/root.cue"
 	}
-	(cd "$compileDir" && cue vet ./...)
+	cueEval "$compileDir" >/dev/null
 	cp -a "$compileDir/" .bl/compiled/
-	echo "Successfully recompiled island config"
+	echo >&2 "Done."
 }
 
 
@@ -441,7 +537,7 @@ updateCatalog() {
 
 cueEval() {
 	(
-		cd .bl/compiled
+		cd "${1:?unspecified cue directory}"; shift || true
 		shopt -s nullglob
 		args=(*.cue */*.cue */*/*.cue */*/*/*.cue */*/*/*/*.cue)
 		for expr in "$@"; do
