@@ -29,12 +29,23 @@ blxDebug() {
 	cueCompile
 }
 
-blxInspect() {
-	cueEval .bl/compiled "$@"
+blxGet() {
+	expr="${1:-env}"
+	cuecmd .bl/compiled <<-EOF
+		import (
+		    "tool/cli"
+		)
+
+		command main: {
+		    task main: cli.Print & {
+		        text: $expr
+		    }
+		}
+	EOF
 }
 
-blxGet() {
-	cueEval .bl/compiled "$@" | jq -r .
+blxInspect() {
+	cueEval .bl/compiled "$@"
 }
 
 blxEnv() {
@@ -322,6 +333,8 @@ blxIslandUpdate() {
 	cat <<-'EOF' > .bl/engine/api.cue
 		import (
 		    "strings"
+			"encoding/json"
+			"strconv"
 		)
 		engine: {
 		    version: [0, 0, 3]
@@ -340,8 +353,72 @@ blxIslandUpdate() {
 		        name: componentName
 			}
 
+		    containers <Name>: LinuxAlpineContainer & {
+			     settings systemPackages bash: true
+			}
+		    containers: {
+		        for name, c in component {
+		        	"\(name)": {
+						settings: {
+							alpineVersion: [3, 9, 4]
+							alpineDigest: "sha256:769fddc7cc2f0a1c35abb2f91432e8beecf83916c421420e6a6da9f8975464b6"
+							appDir: "/workspace"
+							appRun: ["/entrypoint.sh"]
+							appInstall: [
+								["mkdir", "/input", "/output", "/info", "/cache"]
+								// FIXME: inject entrypoint script
+							]
+		    	    	    systemPackages: {
+				                 "openssh-client": true
+				                 "git": true
+				            }
+						}
+		        	}
+		        }
+		    }
 		}
 
+		LinuxAlpineContainer :: {
+		    settings: {
+		        env? <Key>: string
+		        appDir : *"/app"|string
+		        appInstall: *[[]]|[...[...string]]
+		        appRun: [...string]
+		        alpineVersion: *[3]|[...int]
+		        alpineDigest?: string
+		        systemPackages <spkg>: true
+		        adhocPackages <ahpkg>: [...[...string]]
+		    }
+
+			dockerfile: {
+		        out: """
+		            from alpine:\(alpineVersionWithDigest)
+		            # Install system packages
+		            \(systemPackages)
+		            # Install adhoc packages
+		            \(adhocPackages)
+		            # Copy app source into container
+		            COPY . \(settings.appDir)
+		            # Set environment for app install and run
+		            \(env)
+		            # Set workdir for app install and run
+		            WORKDIR \(settings.appDir)
+		            # Install app
+		            \(appInstall)
+		            # Configure run command
+		            \(appRunCmd)
+		            """
+		        alpineVersion: strings.Join([strconv.FormatInt(n, 10) for n in settings.alpineVersion], ".")
+		        alpineDigest: ({dig:settings.alpineDigest, out:string} & ({dig:"", out:""}|{dig:_, out:"@\(dig)"})).out
+		        alpineVersionWithDigest: "\(alpineVersion)\(alpineDigest)"
+		        systemPackages: strings.Join(["RUN apk add -U --no-cache \(pkg)" for pkg, _ in settings.systemPackages], "\n")
+		        adhocPackages: strings.Join(["RUN \(json.Marshal(cmd))" for cmd in settings.adhocPackages], "\n")
+		        env: strings.Join(["ENV \(k)=\(v)" for k, v in settings.env|{}], "\n")
+		        appInstall: strings.Join(["RUN \(strings.Join(cmd, " "))" for cmd in settings.appInstall], "\n")
+		        appRunCmd: "CMD \(strings.Join(settings.appRun, " "))"
+		    }
+		}
+		
 			Component :: {
 		        name: _
 		        target: _
@@ -372,6 +449,9 @@ blxIslandUpdate() {
 		        info <K>: _
 		    }
 		EOF
+
+
+		# CATALOG COMPONENT: git/repo
 		cat <<-'EOF' | updateCatalog component git/repo
 			package repo
 
@@ -433,76 +513,93 @@ cueCompile() {
 		done
 	}
 
-	# 2. Eval all parts into a single file `$tmp/main.cue`
-	( cd $tmp/parts && cue eval *.cue ) > "$tmp/main.cue"
-
-	# 3. Extract blueprint references from all components, and generate CUE imports
+	codegen() {
 	ln -s "$(pwd)/.bl/catalog" "$tmp/catalog"
 	(
+		touch "$tmp/main.cue" # Command should work even if there are no cue files
 		cd "$tmp" && cuecmd . <<-'EOF'
-		import (
-		    "strings"
-		    "tool/exec"
-		    "tool/file"
-		)
-
-		command main: {
-		    task codegenWrite: file.Create & {
-		        filename: "codegen.cue"
-		        contents: codegen.code
-		    }
-
-		    task codegenSetup: exec.Run & {
-		        cmd: ["bash", "-c", codegen.setup]
-		    }
-		}
-
-		// Generate import/apply CUE code from env config
-		codegen : {
-		    code: """
-		        import (
-		            \(strings.Join([import.code for _, import in codegen.import], "\n"))
-		        )
-
-		        \(strings.Join([apply.code for _, apply in codegen.apply], "\n"))
-
-		        """
-
-			setup: """
-		        \(strings.Join([import.setup for _, import in codegen.import], "\n"))
-				"""
-
-			import: {...}
-			apply: {...}
-
-		    for _, e in env {
-		        for _, c in e.component {
-		            symbol = strings.Replace(c.blueprint, "/", "_", -1)
-					if c.blueprint != "" {
-		                import "\(c.blueprint)": {
-		                    source: c.blueprint
-							cueSource: "infralabs.io/stdlib/\(source)"
-		                    code: """
-		                        // Import CUE package for blueprint '\(source)'
-		                            \(symbol) "\(cueSource)"
-		                        """
-							pkgCopyFrom: "catalog/component/\(source)"
-							pkgCopyTo: "pkg/\(cueSource)"
-							setup: "mkdir -p '\(pkgCopyTo)' && rsync -aH --delete '\(pkgCopyFrom)/' '\(pkgCopyTo)/'"
+			import (
+			    "strings"
+			    "tool/exec"
+			    "tool/file"
+			)
+	
+			command main: {
+			    task codegenWrite: file.Create & {
+			        filename: "codegen.cue"
+			        contents: codegen.code
+			    }
+	
+			    task codegenSetup: exec.Run & {
+			        cmd: ["bash", "-c", codegen.setup]
+			    }
+			}
+	
+			// Generate import/apply CUE code from env config
+			codegen : {
+			    code: """
+			        import (
+			            \(strings.Join([import.code for _, import in codegen.imports if !import.setupOnly], "\n"))
+			        )
+	
+			        \(strings.Join([apply.code for _, apply in codegen.apply if !apply.import.setupOnly], "\n"))
+			        """
+	
+				setup: """
+			        \(strings.Join([import.setup for _, import in codegen.imports], "\n"))
+					"""
+	
+				imports: {...}
+				apply: {...}
+				
+			    // Always import linux/container for internal use (build component containers)
+				// FIXME
+			    // imports "linux/container" setupOnly: true
+				// imports "linux/alpine/container" setupOnly: true
+	
+			    for _, e in env|{} {
+			        for _, c in e.component {
+						if c.blueprint != "" {
+			                imports "\(c.blueprint)": {}
+				            apply "\(c.name)": {
+								import: imports[c.blueprint]
+			                    code: """
+			                        // Apply blueprint '\(c.blueprint)' to component '\(c.name)'
+			                        env "\(e.name)" component "\(c.name)": /* Component & */ \(import.symbol)
+			                        """
+			                }
 			            }
-			            apply "\(c.name)": {
-		                    code: """
-		                        // Apply blueprint '\(c.blueprint)' to component '\(c.name)'
-		                        env "\(e.name)" component "\(c.name)": /* Component & */ \(symbol)
-		                        """
-		                }
-		            }
-		        }
-            }
-		}
+			        }
+	            }
+	
+			    imports <importSource>: {
+			        source: importSource
+					symbol: *strings.Replace(source, "/", "_", -1)|string
+			        cueSource: "infralabs.io/stdlib/\(source)"
+			        code: """
+			            // Import CUE package for blueprint '\(source)'
+			            \(symbol) "\(cueSource)"
+			            """
+			        pkgCopyFrom: "catalog/component/\(source)"
+			        pkgCopyTo: "pkg/\(cueSource)"
+					setupOnly: *false|bool
+			        setup: "mkdir -p '\(pkgCopyTo)' && rsync -aH --delete '\(pkgCopyFrom)/' '\(pkgCopyTo)/'"
+			    }
+			}
 		EOF
 	)
 	rm "$tmp/catalog"
+	}
+
+	# 2. Setup packages in the empty workspace (for bootstrap imports)
+	# This must be done before evaluating the main config, or imports will fail
+	codegen
+	
+	# 3. Eval all parts into a single file `$tmp/main.cue`
+	( cd $tmp/parts && cue eval *.cue > ../main.cue || { rm ../main.cue; return 1; } )
+
+	# 3. Extract blueprint references from all components, and generate CUE imports
+	codegen
 
 	cueEval "$tmp" >/dev/null || return 1
 	rsync -aH --delete "$tmp/" ".bl/compiled/"
@@ -566,7 +663,7 @@ cuecmd() {
 		debug "cuecmd() { cue eval -c }"
 		# Hack to get more readable errors on the tool file
 		file_="cmd_${id}_tool_.cue"
-		ln -s "$file" "$dir/$file_"
+		ln -s "$file" "$file_"
 		cue eval *.cue >/dev/null || {
 			for f in *.cue; do
 				if [ "$f" = "$file_" ]; then continue; fi
@@ -579,6 +676,7 @@ cuecmd() {
 		rm "$file_"
 		debug "cuecmd() { cue cmd }"
 		cue cmd "$cmd" *.cue
+		rm *_tool.cue
 	) || return 1
 	debug "cuecmd() success"
 }
