@@ -9,6 +9,33 @@ import (
 engine: {
 	version: [0, 0, 3]
 	channel: "alpha"
+
+	container <envName> <componentName>: LinuxAlpineContainer & {
+		 settings systemPackages bash: true
+		 settings systemPackages curl: true
+	}
+	container: {
+		for envName, _ in env {
+			for componentName, _ in env[envName].component {
+				"\(envName)" "\(componentName)": {
+					settings: {
+						alpineVersion: [3, 9, 4]
+						alpineDigest: "sha256:769fddc7cc2f0a1c35abb2f91432e8beecf83916c421420e6a6da9f8975464b6"
+						appDir: "/workspace"
+						appRun: ["/entrypoint.sh"]
+						appInstall: [
+							["mkdir", "/input", "/output", "/info", "/cache"]
+							// FIXME: inject entrypoint script
+						]
+						systemPackages: {
+							 "openssh-client": true
+							 "git": true
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 env <envName>: {
@@ -21,31 +48,6 @@ env <envName>: {
 	component <componentName>: Component & {
 		// Helpers
 		name: componentName
-	}
-
-	containers <Name>: LinuxAlpineContainer & {
-		 settings systemPackages bash: true
-		 settings systemPackages curl: true
-	}
-	containers: {
-		for name, c in component {
-			"\(name)": {
-				settings: {
-					alpineVersion: [3, 9, 4]
-					alpineDigest: "sha256:769fddc7cc2f0a1c35abb2f91432e8beecf83916c421420e6a6da9f8975464b6"
-					appDir: "/workspace"
-					appRun: ["/entrypoint.sh"]
-					appInstall: [
-						["mkdir", "/input", "/output", "/info", "/cache"]
-						// FIXME: inject entrypoint script
-					]
-					systemPackages: {
-						 "openssh-client": true
-						 "git": true
-					}
-				}
-			}
-		}
 	}
 }
 
