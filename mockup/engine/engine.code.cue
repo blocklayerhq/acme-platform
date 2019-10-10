@@ -90,35 +90,35 @@ LinuxAlpineContainer :: {
 	}
 }
 
-	Component :: {
-		name: _
-		target: _
-		slug: strings.Replace(strings.Replace(target, ".", "-", -1), "_", "-", -1)
+Component :: {
+   name: _
+   target: _
+   slug: strings.Replace(strings.Replace(target, ".", "-", -1), "_", "-", -1)
 
-		// 1. To be completed by env operator
-		blueprint?: string
-		settings: {...}
-		auth?: _
-		input?: {
-			from: string
-			fromDir: string
-			toDir: string
-		}
-		remotes: {
-			pullFrom?: _
-			pushTo?: _
-		}
+   // 1. To be completed by env operator
+   blueprint?: string
+   settings: {...}
+   auth?: _
+   input?: {
+   	from: string
+   	fromDir: string
+   	toDir: string
+   }
+   remotes: {
+   	pullFrom?: _
+   	pushTo?: _
+   }
 
-		// 2. To be completed by component author
-		actions: {
-			install?: {
-				engine?: *[0, 0, 3]|[...int]
-				packages? <Pkg>: true
-			}
-			remove?: string
-			pull?: string
-			assemble?: string
-			push?: string
-		}
-		info <K>: _
-	}
+   // 2. To be completed by component author
+   actions: {
+   	install?: {
+   		engine?: *[0, 0, 3]|[...int]
+   		packages? <Pkg>: true
+   	}
+   	remove?: string
+   	pull?: string
+   	assemble?: string
+   	push?: string
+   }
+   info <K>: _
+}
