@@ -10,9 +10,10 @@
 set -eu
 
 blx() {
+	debug "blx $@"
 	cmd=${1:-}; shift || true
 	case $cmd in
-		env|component|island|inspect|get|help)
+		env|component|island|inspect|get|help|debug)
 			"blx$(cap $cmd)" "$@"
 			;;
 		"")
@@ -22,6 +23,10 @@ blx() {
 			fatal "unsupported command: $cmd"
 			;;
 	esac
+}
+
+blxDebug() {
+	cueCompile
 }
 
 blxInspect() {
@@ -144,14 +149,14 @@ blxEnvCreate() {
 	"${EDITOR:-vim}" "$tmp/config.cue"
 	mkdir "$(envdir $env)"
 	cp -a "$tmp/" "$(envdir $env)/"
-	compile
+	cueCompile
 	echo >&2 "Successfully created env '$env'"
 }
 
 blxEnvDestroy() {
 	env="${1:?unspecified env name}"
 	rm -fr .bl/env/"$env"
-	compile
+	cueCompile
 }
 
 
@@ -205,87 +210,30 @@ blxComponentInstall() {
 	env="${1:?unspecified env name}"
 	component="${2:?unspecified component name}"
 
-	tmp="$(mktemp -d)"
-	cp -a .bl/ "$tmp/.bl/"
-	echo >&2 "Staging change in $tmp"
-	# Everything inside the subprocess happens in the temp sandbox
-	(
-		cd "$tmp" # later this can be HOME=$tmp
+	# Env must exist
+	if [ ! -e "$(envdir $env)" ]; then
+		echo >&2 "No such env: $env"
+		return 1
+	fi
 
-		# Env must exist
-		if [ ! -e "$(envdir $env)" ]; then
-			echo >&2 "No such env: $env"
-			return 1
-		fi
+	# Component must not exist
+	dir="$(componentdir $env $component)"
+	if [ -e "$dir" ]; then
+		echo >&2 "component '$component' already installed in env '$env'"
+		return 1
+	fi
 
-		# Component must not exist
-		dir="$(componentdir $env $component)"
-		if [ -e "$dir" ]; then
-			echo >&2 "component '$component' already installed in env '$env'"
-			return 1
-		fi
+	# Create component dir
+	debug "mkdir -p $dir"
+	mkdir -p "$dir"
 
-		# Create component dir
-		mkdir -p "$dir"
+	# Create placeholder user config (to be edited further by the user)
+	cat > "$dir/config.cue" <<-EOF
+		env "$env" component "$component": {
 
-		# Create placeholder user config (to be edited further by the user)
-		cat > "$dir/config.cue" <<-EOF
-			env "$env" component "$component": {
-
-				// Change this to the component blueprint to use
-				// To search for available component blueprints: "$0 component search"
-			    blueprint: ""
-
-			    settings: {
-			        // Env-specific component settings here
-			    }
-			}
-		EOF
-
-		# Copy the right blueprint from the catalog into the component config, then compile
-		updateComponent() {
-			env="${1:?unspecified env name}"
-			component="${2:?unspecified component name}"
-			dir="$(componentdir $env $component)"
-			blueprint="$(cueEval $dir env[\"$env\"].component[\"$component\"].blueprint | jq -r .)"
-			cp ".bl/catalog/component/$blueprint/blueprint.cue" "$dir/"
-		}
-
-		# Loop: edit config / compile, until it works or user gives up
-		while true; do
-			"${EDITOR:-vim}" "$dir/config.cue"
-			if updateComponent "$env" "$component" && compile; then
-				break
-			else
-				read -p "There were errors in the component configuration. Try again? [Yn] " rep
-				case rep in
-					Y|y|"") continue ;;
-					*) return 1;;
-				esac
-			fi
-		done
-
-	)
-
-	# Success! Copy the new configuration back
-	# FIXME: does cp -a sync remove files too? If not, use rsync
-	cp -a "$tmp/" ".bl/"
-
-	echo >&2 Successfully installed component '$component' in env '$env'
-}
-
-blxComponentInstallOld() {
-	env="${1:?unspecified env name}"
-	component="${2:?unspecified component name}"
-	blueprint="${3:?unspecified component source}"
-
-
-	# Create template component
-	tmp=$(mktemp -d)
-	cat >"$tmp/config.cue" <<-EOF
-		env $env component "$component": {
-
-		    blueprint: "$blueprint"
+			// Change this to the component blueprint to use
+			// To search for available component blueprints: "$0 component search"
+		    blueprint: ""
 
 		    settings: {
 		        // Env-specific component settings here
@@ -293,54 +241,26 @@ blxComponentInstallOld() {
 		}
 	EOF
 
-	compileComponent() {
-		dir="${1:?unspecified component dir}"
-		# Install component blueprint from catalog
-		blueprint="$(cueEval $tmp env[\"$env\"].component[\"$component\"].blueprint | jq -r .)"
-			cp ".bl/catalog/component/$blueprint/blueprint.cue" "$tmp/blueprint.cue"
-#
-# FIXME: switching to new implementation of blxComponentInstall
-#			if cueEval "$tmp" >/dev/null
-#			break
-#	done
+	blx component configure "$env" "$component"
 
-	}
-	while true; do
-			"${EDITOR:-vim}" "$tmp/config.cue"
-
-			if [ compileComponent "$tmp" ]; then
-				read -p "There were errors in the component configuration. Try again? [Yn] " rep
-				case rep in
-					Y|y|"") continue ;;
-					*) break ;;
-				esac
-			fi
-	done
-
-
-	mkdir -p "$dir"
-	cp -a "$tmp/" "$dir/"
-
-	compile
-	echo >&2 "Successfully installed component '$component' in env '$env'"
+	echo >&2 Successfully installed component '$component' in env '$env'
 }
-
-
 
 blxComponentConfigure() {
 	env="${1:?unspecified env name}"
 	component="${2:?unspecified component name}"
-
-	# Copy component to temporary sandbox
 	dir="$(componentdir $env $component)"
-	userConfig="$dir/configure.cue"
-	tmp="$(mktemp)"
-	if [ -e "$userConfig" ]; then
-		cp "$userConfig" "$tmp"
-	fi
-	"${EDITOR:-vim}" "$tmp"
-	mv "$tmp" "$userConfig"
-	compile
+
+	# Loop: edit config / compile, until it works or user gives up
+	while true; do
+		"${EDITOR:-vim}" "$dir/config.cue"
+		if cueCompile; then
+			break
+		else
+			read -p "> Component configuration has errors. Press enter to fix, or Ctrl-C to abort: "
+		fi
+	done
+	echo "Successfully configured component '$component' of env '$env'"
 }
 
 blxComponentRemove() {
@@ -359,7 +279,7 @@ blxComponentRemove() {
 		return 1
 	fi
 	rm -fr "$dir"
-	compile
+	cueCompile
 }
 
 
@@ -399,115 +319,193 @@ blxIslandUpdate() {
 		.bl/engine \
 		.bl/env
 	# Install latest engine code
-	cat <<-EOF > .bl/engine/api.cue
+	cat <<-'EOF' > .bl/engine/api.cue
 		import (
-			"strings"
+		    "strings"
 		)
 		engine: {
-			version: [0, 0, 3]
-			channel: "alpha"
+		    version: [0, 0, 3]
+		    channel: "alpha"
 		}
 
 		env <envName>: {
-			name: envName
-			target: string
-			settings <K>: _
-			keychain <K>: _
+		    name: envName
+		    target: string
+		    TARGET=target, component <componentName> target: *TARGET|string
+		    settings <K>: _
+		    keychain <K>: _
 
-			component <componentName>: {
-				// 1. To be completed by env operator
-				blueprint?: string
-				target: *env.target|string
-				settings <K>: _
-				auth?: _
-				input?: {
-					from: string
-					fromDir: string
-					toDir: string
-				}
-				remotes: {
-					pullFrom?: _
-					pushTo?: _
-				}
-
-				// 2. To be completed by component author
-				actions: {
-					install?: string
-					remove?: string
-					pull?: string
-					package?: string
-					push?: string
-				}
-				info <K>: _
-
-				// 3. Helpers provided by the engine
-
-				// Helpers
-				name: componentName
-				slug: strings.Replace(strings.Replace(target, ".", "-", -1), "_", "-", -1)
+		    component <componentName>: Component & {
+		        // Helpers
+		        name: componentName
 			}
+
 		}
+
+			Component :: {
+		        name: _
+		        target: _
+		        slug: strings.Replace(strings.Replace(target, ".", "-", -1), "_", "-", -1)
+
+		        // 1. To be completed by env operator
+		        blueprint?: string
+				settings: {...}
+		        auth?: _
+		        input?: {
+		            from: string
+			        fromDir: string
+			        toDir: string
+		        }
+		        remotes: {
+		            pullFrom?: _
+		            pushTo?: _
+		        }
+
+		        // 2. To be completed by component author
+		        actions: {
+		            install?: string
+		            remove?: string
+		            pull?: string
+		            package?: string
+		            push?: string
+		        }
+		        info <K>: _
+		    }
 		EOF
 		cat <<-'EOF' | updateCatalog component git/repo
-			catalog component "git/repo": {
-				settings: {
-				url: string
-					ref: *"master"|string
-				}
+			package repo
 
-				info: {
-					commitID: string
-					shortCommitID: string
-				}
+			settings: {
+			    url: string
+			    ref: *"master"|string
+			}
 
-				pull: #"""
-					if [ ! -d cache/mirror]; then
-						git clone --progress --mirror '\#(settings.url)' cache/mirror
-					fi
-					git -C cache/mirror remote update
-					git clone --reference cache/mirror '\#(settings.url)' input/
-					"""#
+			/* FIXME
+			info: {
+			    commitID: string
+			    shortCommitID: string
+			}
+			*/
 
-				assemble: #"""
-					cp -a input/ output/
-					git -C output/ reset --hard '\#(settings.ref)'
-					git -C output/ rev-parse '\#(settings.ref)' > info/commitID
-					git -C outputs/out rev-parse --short $(cat inputs/ref) > info/shortCommitID
-					"""#
+			actions: {
+			    pull: #"""
+			        if [ ! -d cache/mirror]; then
+			            git clone --progress --mirror '\#(settings.url)' cache/mirror
+			        fi
+			        git -C cache/mirror remote update
+			        git clone --reference cache/mirror '\#(settings.url)' input/
+			        """#
 
-				install: {
-					engine: [0, 0, 3]
-					packages: {
-						git: true
-						"openssh-client": true
-					}
-				}
+			    assemble: #"""
+			        cp -a input/ output/
+			        git -C output/ reset --hard '\#(settings.ref)'
+			        git -C output/ rev-parse '\#(settings.ref)' > info/commitID
+			        git -C outputs/out rev-parse --short $(cat inputs/ref) > info/shortCommitID
+			        """#
+
+			    install: {
+			        engine: [0, 0, 3]
+			        packages: {
+			            git: true
+			            "openssh-client": true
+			        }
+			    }
 			}
 		EOF
-	compile
+	cueCompile
 
 }
 
-compile() {
-	echo -n >&2 "--- recompiling island config... "
-	sourcedirs=(engine env)
-	package=${1:-bl}
-	compileDir=$(mktemp -d)
-	(
-		cd .bl && find "${sourcedirs[@]}" -name '*.cue'
-	) | {
-		while read -r cuePath; do
-			mkdir -p "$compileDir/$(dirname $cuePath)"
-			{
-				echo package $package
-				cat ".bl/$cuePath"
-			} > "$compileDir/$cuePath"
+
+cueCompile() {
+	tmp="$(mktemp -d)"
+	touch "$tmp/cue.mod"
+	debug cueCompile tmp=$tmp
+
+	# 1. Flatten the CUE config hierarchy into a single directory `$tmp/parts/*.cue`
+	mkdir "$tmp/parts"
+	find .bl/env .bl/engine -name '*.cue' | {
+		while read f; do
+			# Flatten path into a single file ( eg. '.bl/foo/bar.cue' becomes 'foo_bar.cue')
+			flatf="$(sed -E -e 's/^\.bl\///' -e 's/\//_/g' <<<$f)"
+			debug "cueCompile() { cp $f $tmp/parts/$flatf }"
+			cp "$f" "$tmp/parts/$flatf"
 		done
-		echo package $package > "$compileDir/$cuePath/root.cue"
 	}
-	cueEval "$compileDir" >/dev/null
-	cp -a "$compileDir/" .bl/compiled/
-	echo >&2 "Done."
+
+	# 2. Eval all parts into a single file `$tmp/main.cue`
+	( cd $tmp/parts && cue eval *.cue ) > "$tmp/main.cue"
+
+	# 3. Extract blueprint references from all components, and generate CUE imports
+	ln -s "$(pwd)/.bl/catalog" "$tmp/catalog"
+	(
+		cd "$tmp" && cuecmd . <<-'EOF'
+		import (
+		    "strings"
+		    "tool/exec"
+		    "tool/file"
+		)
+
+		command main: {
+		    task codegenWrite: file.Create & {
+		        filename: "codegen.cue"
+		        contents: codegen.code
+		    }
+
+		    task codegenSetup: exec.Run & {
+		        cmd: ["bash", "-c", codegen.setup]
+		    }
+		}
+
+		// Generate import/apply CUE code from env config
+		codegen : {
+		    code: """
+		        import (
+		            \(strings.Join([import.code for _, import in codegen.import], "\n"))
+		        )
+
+		        \(strings.Join([apply.code for _, apply in codegen.apply], "\n"))
+
+		        """
+
+			setup: """
+		        \(strings.Join([import.setup for _, import in codegen.import], "\n"))
+				"""
+
+			import: {...}
+			apply: {...}
+
+		    for _, e in env {
+		        for _, c in e.component {
+		            symbol = strings.Replace(c.blueprint, "/", "_", -1)
+					if c.blueprint != "" {
+		                import "\(c.blueprint)": {
+		                    source: c.blueprint
+							cueSource: "infralabs.io/stdlib/\(source)"
+		                    code: """
+		                        // Import CUE package for blueprint '\(source)'
+		                            \(symbol) "\(cueSource)"
+		                        """
+							pkgCopyFrom: "catalog/component/\(source)"
+							pkgCopyTo: "pkg/\(cueSource)"
+							setup: "mkdir -p '\(pkgCopyTo)' && rsync -aH --delete '\(pkgCopyFrom)/' '\(pkgCopyTo)/'"
+			            }
+			            apply "\(c.name)": {
+		                    code: """
+		                        // Apply blueprint '\(c.blueprint)' to component '\(c.name)'
+		                        env "\(e.name)" component "\(c.name)": /* Component & */ \(symbol)
+		                        """
+		                }
+		            }
+		        }
+            }
+		}
+		EOF
+	)
+	rm "$tmp/catalog"
+
+	cueEval "$tmp" >/dev/null || return 1
+	rsync -aH --delete "$tmp/" ".bl/compiled/"
 }
 
 
@@ -539,22 +537,50 @@ cueEval() {
 	(
 		cd "${1:?unspecified cue directory}"; shift || true
 		shopt -s nullglob
-		args=(*.cue */*.cue */*/*.cue */*/*/*.cue */*/*/*/*.cue)
+		files=(*.cue)
+		args="${files[@]}"
 		for expr in "$@"; do
 			args+=(-e "$expr")
 		done
-		cue eval -c "${args[@]}"
+		cue eval -c ${args[@]} || {
+			if [ "${DEBUG:-}" ]; then
+				for f in ${files[@]}; do
+					echo ${f}:;
+					cat -en $f | sed 's/	/<TAB>/g'
+					echo ---
+				done
+			fi
+			return 1
+		} >&2
 	)
 }
 	
 cuecmd() {
-	cmd="${1:-main}"
-	tmp="$(mktemp -d)"
-	echo --- cuecmd --- $tmp
-	cat > "$tmp/main_tool.cue"
-	ln -s "$tmp/main_tool.cue" "$tmp/main_tool_.cue"
-	cue vet "$tmp/*.cue"
-	cue cmd "$cmd" "$tmp/*.cue"
+	dir="${1:?unspecified target dir}"
+	cmd="${2:-main}"
+	id="$RANDOM"
+	file="cmd_${id}_tool.cue"
+	cat > "$dir/$file"
+	(
+		cd $dir
+		debug "cuecmd() { cue eval -c }"
+		# Hack to get more readable errors on the tool file
+		file_="cmd_${id}_tool_.cue"
+		ln -s "$file" "$dir/$file_"
+		cue eval *.cue >/dev/null || {
+			for f in *.cue; do
+				if [ "$f" = "$file_" ]; then continue; fi
+				echo ${f}:;
+				cat -en $f | sed 's/	/<TAB>/g'
+				echo ---
+			done
+			return 1
+		} >&2
+		rm "$file_"
+		debug "cuecmd() { cue cmd }"
+		cue cmd "$cmd" *.cue
+	) || return 1
+	debug "cuecmd() success"
 }
 	
 cap() {
@@ -564,6 +590,12 @@ cap() {
 fatal() {
 	echo >&2 "$@"
 	exit 1
+}
+
+debug() {
+	if [ "${DEBUG:-}" ]; then
+		echo >&2 --- "$@"
+	fi
 }
 
 blx "$@"
