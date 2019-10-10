@@ -355,6 +355,7 @@ blxIslandUpdate() {
 
 		    containers <Name>: LinuxAlpineContainer & {
 			     settings systemPackages bash: true
+			     settings systemPackages curl: true
 			}
 		    containers: {
 		        for name, c in component {
@@ -593,12 +594,15 @@ cueCompile() {
 
 	# 2. Setup packages in the empty workspace (for bootstrap imports)
 	# This must be done before evaluating the main config, or imports will fail
+	debug "cueCompile() first codegen"
 	codegen
 	
 	# 3. Eval all parts into a single file `$tmp/main.cue`
-	( cd $tmp/parts && cue eval *.cue > ../main.cue || { rm ../main.cue; return 1; } )
+	# ( cd $tmp/parts && cue eval *.cue > ../main.cue || { rm ../main.cue; return 1; } )
+	cue eval "$tmp"/parts/*.cue > "$tmp"/main.cue || return 1
 
 	# 3. Extract blueprint references from all components, and generate CUE imports
+	debug "cueCompile() second codegen"
 	codegen
 
 	cueEval "$tmp" >/dev/null || return 1
