@@ -12,9 +12,9 @@ info: {
 }
 */
 
-actions: {
+action: {
 	pull: #"""
-		if [ ! -d cache/mirror]; then
+		if [ ! -d cache/mirror ]; then
 			git clone --progress --mirror '\#(settings.url)' cache/mirror
 		fi
 		git -C cache/mirror remote update
@@ -27,13 +27,12 @@ actions: {
 		git -C output/ rev-parse '\#(settings.ref)' > info/commitID
 		git -C outputs/out rev-parse --short $(cat inputs/ref) > info/shortCommitID
 		"""#
-
-	install: {
-		engine: [0, 0, 3]
-		packages: {
-			git: true
-			"openssh-client": true
-		}
-	}
 }
 
+container: {
+	engine: [0, 0, 3]
+	packages: {
+		git: true
+		"openssh-client": true
+	}
+}

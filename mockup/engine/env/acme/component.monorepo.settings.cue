@@ -8,7 +8,7 @@ env "acme" component "monorepo": {
 
     settings: {
         // Env-specific component settings here
-		url: "https://github.com/foo"
+		url: "https://github.com/atulmy/crate"
     }
 }
 
