@@ -6,11 +6,9 @@ import (
 
 currentEnv="acme"
 
-command assemble: {
-
-	for componentName, a in engine.action.assemble[currentEnv] {
-			task "\(componentName)": exec.Run & {
-				cmd: ["bash", "-x", "-c", a.buildscript]
-			}
+command stage: {
+	task stge: exec.Run & {
+		cmd: ["cat"]
+		stdin: engine.action.env[currentEnv].stage.script.out
 	}
 }

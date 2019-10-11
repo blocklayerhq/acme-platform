@@ -11,7 +11,7 @@ import (
 settings: {
 	env? <Key>: string
 	appDir : *"/app"|string
-	appInstall: *[[]]|[...[...string]]
+	appInstall?: [...[...string]]
 	appRun: [...string]
 	alpineVersion: *[3]|[...int]
 	alpineDigest?: string

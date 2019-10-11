@@ -2,6 +2,7 @@ package bl
 
 import (
 	"strings"
+	"encoding/base64"
 
 	linux_alpine_container "b.l/linux/alpine/container"
 )
@@ -9,111 +10,171 @@ import (
 engine: {
 	version: [0, 0, 3]
 	channel: "alpha"
-
 	cache: "./data"
 
-	action assemble: {
+	settings: {
+		stateRepo: string
+	}
+}
 
-		for _, e in env {
-			for _, c in e.component {
-				"\(e.name)" "\(c.name)": {
-					dockerfile: """
-						# syntax=docker/dockerfile:experimental@sha256:9022e911101f01b2854c7a4b2c77f524b998891941da55208e71c0335e6e82c3
-						\(container.dockerfile.out)
 
-						RUN --mount=type=cache,target=/workspace/cache /entrypoint.sh pull
-						RUN --mount=type=cache,target=/workspace/cache /entrypoint.sh assemble
+for _, e in env {
+	engine action env "\(e.name)" stage: {
 
-						FROM scratch AS output
-						COPY --from=component /\(container.settings.appDir)/input /input
-						COPY --from=component /\(container.settings.appDir)/output /output
-						COPY --from=component /\(container.settings.appDir)/info /info
-						COPY --from=component /\(container.settings.appDir)/cache /cache
-						"""
+		statedir: ".bl/state"
+		imageName: "\(engine.settings.stateRepo):\(e.name)"
 
-					dataPath: "./env/\(e.name)/data/component/\(c.name)"
-					buildscript: """
-						set -e
-						# Assemble container for component '\(c.name)' of env '\(e.name)'
-						src="$(mktemp -d)"
-						cat > "$src/entrypoint.sh" <<'EOF'
-						\(entrypoint)
-						EOF
-						cat > "$src/Dockerfile" <<'EOF'
-						\(dockerfile)
-						EOF
+		script: {
+			out: """
+				#!/bin/bash
 
-						# Hack to initialize ./data if it doesn't exist
-						# (otherwise, docker-buildx complains)
-						if [ ! -d ./data ]; then
-							docker-buildx build --cache-to type=local,dest=\(cache) - <<<"from scratch" 2>/dev/null >/dev/null
-						fi
-						docker-buildx build --progress=plain --output type=local,dest='\(dataPath)' --cache-from type=local,src='\(cache)' --cache-to type=local,dest='\(cache)' "$src"
-						"""
-					entrypoint: """
-						#!/bin/bash
+				dockerfile="$(mktemp)"
+				cat >"$dockerfile" <<'EOF'
+				\(dockerfile)
+				EOF
+				echo "Building env '\(e.name)' with input=. and dockerfile=$dockerfile"
+				\(initState)
+				\(buildx) \(cacheFrom) \(componentCacheFlags) --push -t '\(imageName)' -f "$dockerfile" .
+				"""
 
-						set -eux
+			initState: """
+				# Hack to initialize ./data if it doesn't exist
+				# (otherwise, docker-buildx complains)
+				if [ ! -d '\(statedir)' ]; then
+					echo "Empty state directory. Initializing \(statedir)"
+					\(buildx) - <<<'from scratch' >/dev/null 2>&1
+				fi
 
-						cmd="${1:-}"; shift || true
+				# If there is no env state (image \(imageName)), create it
+				docker-buildx imagetools inspect '\(imageName)' >/dev/null 2>&1 || {
+					echo "Empty env state. Initializing \(imageName)"
+					\(buildx) --push -t '\(imageName)' - <<<'from scratch' >/dev/null 2>&1
+				}
+				"""
+			cacheFrom: "--cache-from=type=local,src='\(statedir)'"
+			cacheTo: "--cache-to=type=local,dest='\(statedir)'"
+			buildx: "docker-buildx build --progress=plain \(cacheTo)" 
+			componentCacheFlags=strings.Join([action.component[e.name][c.name].stage.cacheFlag for _, c in e.component], " ")
+		}
 
-						case "$cmd" in
+		forEach = {
+			component <c>: string
+			for c, _ in e.component { component "\(c)": string }
+			out: strings.Join([line for _, line in component], "\n") 
+		}
 
-							push)
-								\(strings.Replace(c.action.push, "\n", "\n\t\t", -1))
-							;;
+		dockerfile: """
+			# syntax=docker/dockerfile:experimental@sha256:9022e911101f01b2854c7a4b2c77f524b998891941da55208e71c0335e6e82c3
+			# Load env state from previous run
+			FROM \(imageName) AS env
 
-							pull)
-								\(strings.Replace(c.action.pull, "\n", "\n\t\t", -1))
-							;;
+			# Initialize state directory if it's empty
+			\((forEach & {
+				component <c>: #"""
+					RUN \
+						--mount=type=bind,from=busybox,source=/bin/mkdir,target=/bin/mkdir \
+						["/bin/mkdir", "-p", "/component/\#(c)"]
+					"""#
+			}).out)
 
-							assemble)
-								\(strings.Replace(c.action.assemble, "\n", "\n\t\t", -1))
-							;;
+			# Run 'stage' entrypoint of each bot
+			# FIXME: connect component dependency graph with 'COPY --from='
+			\(strings.Join([
+				action.component[e.name][c.name].stage.dockerfile
+				for _, c in e.component
+			], "\n"))
 
-							install)
-								\(strings.Replace(c.action.install, "\n", "\n\t\t", -1))
-							;;
 
-							remove)
-								\(strings.Replace(c.action.remove, "\n", "\n\t\t", -1))
-							;;
+			FROM scratch AS output
+			\(strings.Join([
+				"COPY --from=\(engine.container[e.name][c.name].settings.buildLabel) /workspace /component/\(c.name)"
+				for _, c in e.component
+			], "\n"))
+			"""
+	}
 
-							*)
-								echo >&2 "Unsupported action: $cmd"
-							;;
 
-						esac
-
-						# FIXME: entrypoint for '\(e.name)/\(c.name)'
-						"""
-					container: linux_alpine_container & {
-						settings: {
-							buildLabel: "component" // Base label for multi-stage build
-							alpineVersion: [3, 9, 4]
-							alpineDigest: "sha256:769fddc7cc2f0a1c35abb2f91432e8beecf83916c421420e6a6da9f8975464b6"
-							appDir: "/workspace"
-							appRun: ["/entrypoint.sh"]
-							appInstall: [
-								["mkdir", "input", "output", "info", "cache"],
-								["mv", "entrypoint.sh", "/entrypoint.sh"],
-								["chmod", "+x", "/entrypoint.sh"]
-							] + [
-								["touch", "info/\(key)"] for key, _ in c.info
-							]
-							systemPackages: {
-								bash: true // always install bash
-								for vpkg, _ in c.container.packages {
-									"\(vpkg)": true
-								}
-							}
-						}
+	for _, c in e.component {
+		engine container "\(e.name)" "\(c.name)": linux_alpine_container & {
+			settings: {
+				buildLabel: "component_\(e.name)_\(c.name)"
+				alpineVersion: [3, 9, 4]
+				alpineDigest: "sha256:769fddc7cc2f0a1c35abb2f91432e8beecf83916c421420e6a6da9f8975464b6"
+				appDir: "/workspace"
+				appRun: ["/entrypoint.sh"]
+				appInstall: [
+					["mkdir", "input", "output", "info", "cache"],
+					["bash", "-c", "base64 -d> /entrypoint.sh <<<'\(base64.Encode(null, entrypoint.out))'"],
+					["chmod", "+x", "/entrypoint.sh"],
+					["touch"] + ["info/\(key)" for key, _ in c.info]
+				]
+				systemPackages: {
+					bash: true
+					for vpkg, _ in c.container.packages {
+						"\(vpkg)": true
 					}
 				}
+			}
+
+			entrypoint = {
+				out: """
+					#!/bin/bash
+
+					set -eux
+					cmd="${1:-}"; shift || true
+					case "$cmd" in
+						\(strings.Join(actionSnippets, "\n"))
+						*)
+							echo >&2 "Unsupported action: $cmd"
+						;;
+					esac
+					"""
+
+				actionSnippets: ["""
+					\(action))
+						\(strings.Replace(snippet, "\n", "\n\t\t", -1))
+					;;
+					"""
+					for action, snippet in c.action
+				]
+
+			}
+		}
+
+		engine action component "\(e.name)" "\(c.name)":  {
+			stage cache: true
+			pull cache: false
+			push cache: false
+			install cache: false
+			remove cache: false
+
+			<actionName>: {
+				cache: bool|*true
+				cacheKey: "cache_key_\(c.name)"
+				cacheFlag: *""|string
+				if !cache {
+					cacheFlag: "--arg \(cacheKey)=$(date +%s)-$RANDOM"
+				}
+
+				dockerfile: """
+					\(engine.container[e.name][c.name].dockerfile.out)
+
+					# Hook up inputs (FIXME)
+					COPY --from=env /component/\(c.name) /workspace
+
+					# Hook up keychain (FIXME)
+
+					# Set this to a random value at runtime to disable cache
+					ARG \(cacheKey)=42
+					# Run the 'stage' entrypoint of component '\(c.name)' in env '\(e.name)'
+					RUN --mount=type=cache,target=/workspace/cache /entrypoint.sh stage
+					"""
 			}
 		}
 	}
 }
+
+
 
 env <envName>: {
 	name: envName
@@ -157,7 +218,7 @@ Component :: {
 	install: *""|string
    	remove: *""|string
    	pull: *""|string
-   	assemble: *""|string
+   	stage: *""|string
    	push: *""|string
    }
    info <K>: _

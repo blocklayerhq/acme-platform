@@ -20,7 +20,7 @@ action: {
 		git clone --reference cache/mirror '\#(settings.url)' input/
 		"""#
 
-	assemble: #"""
+	stage: #"""
 		# cp -a input/ output/
 		rsync -acH input/ output/
 		git -C output/ reset --hard '\#(settings.ref)'
