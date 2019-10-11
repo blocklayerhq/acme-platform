@@ -18,6 +18,7 @@ settings: {
 	systemPackages <spkg>: true
 	adhocPackages <ahpkg>: [...[...string]]
 	buildLabel?: string
+	copy: *false|bool
 }
 
 dockerfile: {
@@ -28,7 +29,7 @@ dockerfile: {
 		# Install adhoc packages
 		\(adhocPackages)
 		# Copy app source into container
-		COPY . \(settings.appDir)
+		\(copy)
 		# Set environment for app install and run
 		\(env)
 		# Set workdir for app install and run
@@ -38,6 +39,11 @@ dockerfile: {
 		# Configure entrypoint
 		\(entrypoint)
 		"""
+
+	copy: *""|string
+	if settings.copy {
+		copy: "COPY . \(settings.appDir)"
+	}
 	buildLabel: *""|string
 	if settings.buildLabel != "" {
 		buildLabel: " as \(settings.buildLabel)"
