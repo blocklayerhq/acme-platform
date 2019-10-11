@@ -1,3 +1,3 @@
 package bl
 
-engine settings stateRepo: "shykes/acme-dev"
+engine settings stateRepo: "localhost:4242/bl"
