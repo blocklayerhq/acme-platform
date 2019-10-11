@@ -11,22 +11,24 @@ info: {
 }
 
 action: {
-	pull: #"""
+	pull: """
 		pwd
-		if [ ! -d cache/mirror ]; then
-			git clone --progress --mirror '\#(settings.url)' cache/mirror
+		if [ -z "$(ls -A input)" ]; then
+			git clone --progress --mirror '\(settings.url)' input/
 		fi
-		git -C cache/mirror remote update
-		git clone --reference cache/mirror '\#(settings.url)' input/
-		"""#
+		git -C input/ remote update
+		"""
 
-	stage: #"""
-		# cp -a input/ output/
+	stage: """
+		if [ ! -e input/.git ]; then
+			echo No input to process
+			exit 0
+		fi
 		rsync -acH input/ output/
-		git -C output/ reset --hard '\#(settings.ref)'
-		git -C output/ rev-parse '\#(settings.ref)' > info/commitID
-		git -C output/ rev-parse --short '\#(settings.ref)' > info/shortCommitID
-		"""#
+		git -C output/ reset --hard '\(settings.ref)'
+		git -C output/ rev-parse '\(settings.ref)' > info/commitID
+		git -C output/ rev-parse --short '\(settings.ref)' > info/shortCommitID
+		"""
 }
 
 container: {
