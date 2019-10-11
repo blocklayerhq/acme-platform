@@ -6,9 +6,11 @@ import (
 
 currentEnv="acme"
 
-command stage: {
-	task stge: exec.Run & {
-		cmd: ["cat"]
-		stdin: engine.action.env[currentEnv].stage.script.out
-	}
+for actionName, _ in Component.action {
+		command "\(actionName)": {
+			task run: exec.Run & {
+				cmd: ["cat"]
+				stdin: engine.action.env[currentEnv][actionName].script.out
+			}
+		}
 }
