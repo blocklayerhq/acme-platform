@@ -5,15 +5,14 @@ settings: {
 	ref: *"master"|string
 }
 
-/* FIXME
 info: {
 	commitID: string
 	shortCommitID: string
 }
-*/
 
 action: {
 	pull: #"""
+		pwd
 		if [ ! -d cache/mirror ]; then
 			git clone --progress --mirror '\#(settings.url)' cache/mirror
 		fi
@@ -22,10 +21,11 @@ action: {
 		"""#
 
 	assemble: #"""
-		cp -a input/ output/
+		# cp -a input/ output/
+		rsync -acH input/ output/
 		git -C output/ reset --hard '\#(settings.ref)'
 		git -C output/ rev-parse '\#(settings.ref)' > info/commitID
-		git -C outputs/out rev-parse --short $(cat inputs/ref) > info/shortCommitID
+		git -C output/ rev-parse --short '\#(settings.ref)' > info/shortCommitID
 		"""#
 }
 
@@ -34,5 +34,6 @@ container: {
 	packages: {
 		git: true
 		"openssh-client": true
+		rsync: true
 	}
 }

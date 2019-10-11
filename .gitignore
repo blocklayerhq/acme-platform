@@ -1,2 +1,4 @@
 *.swp
 .bl
+mockup/engine/data
+mockup/engine/env/*/data

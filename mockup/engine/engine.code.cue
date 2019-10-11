@@ -10,25 +10,45 @@ engine: {
 	version: [0, 0, 3]
 	channel: "alpha"
 
+	cache: "./data"
+
 	action assemble: {
 
 		for _, e in env {
 			for _, c in e.component {
 				"\(e.name)" "\(c.name)": {
+					dockerfile: """
+						# syntax=docker/dockerfile:experimental@sha256:9022e911101f01b2854c7a4b2c77f524b998891941da55208e71c0335e6e82c3
+						\(container.dockerfile.out)
+
+						RUN --mount=type=cache,target=/workspace/cache /entrypoint.sh pull
+						RUN --mount=type=cache,target=/workspace/cache /entrypoint.sh assemble
+
+						FROM scratch AS output
+						COPY --from=component /\(container.settings.appDir)/input /input
+						COPY --from=component /\(container.settings.appDir)/output /output
+						COPY --from=component /\(container.settings.appDir)/info /info
+						COPY --from=component /\(container.settings.appDir)/cache /cache
+						"""
+
+					dataPath: "./env/\(e.name)/data/component/\(c.name)"
 					buildscript: """
 						set -e
 						# Assemble container for component '\(c.name)' of env '\(e.name)'
-						(
-							cd $(mktemp -d)
-							echo "Building in $(pwd)"
-							cat > entrypoint.sh <<'EOF'
+						src="$(mktemp -d)"
+						cat > "$src/entrypoint.sh" <<'EOF'
 						\(entrypoint)
 						EOF
-							cat > Dockerfile <<'EOF'
-						\(container.dockerfile.out)
+						cat > "$src/Dockerfile" <<'EOF'
+						\(dockerfile)
 						EOF
-							docker build -t b.l/\(e.name)/\(c.name) .
-						)
+
+						# Hack to initialize ./data if it doesn't exist
+						# (otherwise, docker-buildx complains)
+						if [ ! -d ./data ]; then
+							docker-buildx build --cache-to type=local,dest=\(cache) - <<<"from scratch" 2>/dev/null >/dev/null
+						fi
+						docker-buildx build --progress=plain --output type=local,dest='\(dataPath)' --cache-from type=local,src='\(cache)' --cache-to type=local,dest='\(cache)' "$src"
 						"""
 					entrypoint: """
 						#!/bin/bash
@@ -69,14 +89,17 @@ engine: {
 						"""
 					container: linux_alpine_container & {
 						settings: {
+							buildLabel: "component" // Base label for multi-stage build
 							alpineVersion: [3, 9, 4]
 							alpineDigest: "sha256:769fddc7cc2f0a1c35abb2f91432e8beecf83916c421420e6a6da9f8975464b6"
 							appDir: "/workspace"
 							appRun: ["/entrypoint.sh"]
 							appInstall: [
-								["mkdir", "/input", "/output", "/info", "/cache"],
-								["mv", "/workspace/entrypoint.sh", "/entrypoint.sh"],
+								["mkdir", "input", "output", "info", "cache"],
+								["mv", "entrypoint.sh", "/entrypoint.sh"],
 								["chmod", "+x", "/entrypoint.sh"]
+							] + [
+								["touch", "info/\(key)"] for key, _ in c.info
 							]
 							systemPackages: {
 								bash: true // always install bash

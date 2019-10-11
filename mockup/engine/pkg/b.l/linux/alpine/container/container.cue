@@ -17,11 +17,12 @@ settings: {
 	alpineDigest?: string
 	systemPackages <spkg>: true
 	adhocPackages <ahpkg>: [...[...string]]
+	buildLabel?: string
 }
 
 dockerfile: {
 	out: """
-		from alpine:\(alpineVersionWithDigest)
+		from alpine:\(alpineVersionWithDigest)\(buildLabel)
 		# Install system packages
 		\(systemPackages)
 		# Install adhoc packages
@@ -37,6 +38,10 @@ dockerfile: {
 		# Configure entrypoint
 		\(entrypoint)
 		"""
+	buildLabel: *""|string
+	if settings.buildLabel != "" {
+		buildLabel: " as \(settings.buildLabel)"
+	}
 	alpineVersion: strings.Join([strconv.FormatInt(n, 10) for n in settings.alpineVersion], ".")
 	alpineDigest: ({dig:settings.alpineDigest, out:string} & ({dig:"", out:""}|{dig:_, out:"@\(dig)"})).out
 	alpineVersionWithDigest: "\(alpineVersion)\(alpineDigest)"
