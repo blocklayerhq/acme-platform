@@ -12,19 +12,23 @@ info: {
 
 action: {
 	pull: """
-		pwd
-		if [ -z "$(ls -A input)" ]; then
-			git clone --progress --mirror '\(settings.url)' input/
+		if [ ! -d cache/mirror ]; then
+			git clone --progress --mirror '\(settings.url)' cache/mirror
 		fi
-		git -C input/ remote update
+		git -C cache/mirror  remote update
+		if [ ! -d cache/cloned ]; then
+			git clone --reference cache/mirror '\(settings.url)' cache/cloned
+		else
+			git -C cache/cloned fetch --all
+		fi
 		"""
 
 	stage: """
-		if [ ! -e input/.git ]; then
+		if [ "$(ls -A input/ | wc -l)" -eq 0 ]; then
 			echo No input to process
 			exit 0
 		fi
-		rsync -acH input/ output/
+		rsync -aH --delete cache/cloned/ output/
 		git -C output/ reset --hard '\(settings.ref)'
 		git -C output/ rev-parse '\(settings.ref)' > info/commitID
 		git -C output/ rev-parse --short '\(settings.ref)' > info/shortCommitID
