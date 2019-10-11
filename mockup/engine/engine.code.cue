@@ -108,9 +108,10 @@ for _, e in env {
 				appRun: ["/entrypoint.sh"]
 				appInstall: [
 					["mkdir", "input", "output", "info", "cache"],
-					["bash", "-c", "base64 -d> /entrypoint.sh <<<'\(base64.Encode(null, entrypoint.out))'"],
+					["touch", "/entrypoint.sh"],
 					["chmod", "+x", "/entrypoint.sh"],
-					["touch"] + ["info/\(key)" for key, _ in c.info]
+					["touch"] + ["info/\(key)" for key, _ in c.info],
+					["bash", "-c", "base64 -d> /entrypoint.sh <<<'\(base64.Encode(null, entrypoint.out))'"]
 				]
 				systemPackages: {
 					bash: true
