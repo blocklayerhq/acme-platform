@@ -2,25 +2,19 @@
 
 set -ex
 
+WORKSPACE="acme-corp"
+
 setup_base() {
-	bl line rm acme-clothing-base || true
-	bl line create acme-clothing-base -f ./acme-clothing.pipeline -d "Base Developer Pipeline for ACME"
+	bl --workspace "$WORKSPACE" line rm acme-clothing-staging || true
+	bl --workspace "$WORKSPACE" line create acme-clothing-staging -f ./acme-clothing.pipeline -d "Base Developer Pipeline for ACME"
 	OVERRIDES=()
 	. .overrides.acme-clothing-base.secret
-	bl line run acme-clothing-base "${OVERRIDES[@]}" || true
+	bl --workspace "$WORKSPACE" line run -d acme-clothing-staging -o name=acme-clothing-staging "${OVERRIDES[@]}" || true
 }
 
 setup_shtest() {
-	bl line ls | tr -s ' ' | cut -d' ' -f2 | sed -E -n '2,$s/^(shtest.*)$/bl line rm \1/p' | sh -x
-}
-
-setup_staging() {
-	bl line ls | tr -s ' ' | cut -d' ' -f2 | sed -E -n '2,$s/^(acme-clothing-staging)$/bl line rm \1/p' | sh -x
-
-	bl line clone acme-clothing-base acme-clothing-staging -d "Staging environment for ACME Clothing"
-	bl line run -d acme-clothing-staging -o name=acme-clothing-staging
+	bl --workspace "$WORKSPACE" line ls | tr -s ' ' | cut -d' ' -f2 | sed -E -n '2,$s/^(shtest.*)$/bl line rm \1/p' | sh -x
 }
 
 setup_base
 setup_shtest
-setup_staging

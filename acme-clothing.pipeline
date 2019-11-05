@@ -36,11 +36,26 @@ task name_url_safe {
 /// to make sure we can deploy an application without controlling its
 /// development environment.
 
-task monorepo {
-    op = "git.clone"
-    src = "https://github.com/atulmy/crate.git"
+input git_sshkey {
+    type = "file"
 }
 
+input git_ref {
+    type = "string"
+    value = "master"
+}
+
+task monorepo {
+    op = "git.clone"
+    src = "git@github.com:blocklayerhq/acme-clothing.git"
+    ref = input.git_ref
+    ssh-key = input.git_sshkey
+}
+
+input src {
+    type = "fstree"
+    value = monorepo.out
+}
 
 //
 // DNS setup
@@ -75,9 +90,10 @@ task api_dns_record_name {
 // Optionally, override API source code with the "api_src" input.
 task api_src {
     op = "fs.subtree"
-    src = monorepo.out
-    path = "code/api"
+    src = input.src
+    path = "crate/code/api"
 }
+
 input api_src {
     type = "fstree"
     value = api_src.out
@@ -88,6 +104,7 @@ task api_docker_image {
     src = input.api_src
     dockerfile = input.api_docker_image_dockerfile
 }
+
 input api_docker_image_dockerfile {
     type = "string"
     value = <<-EOF
@@ -111,6 +128,7 @@ EOF
 input api_gcp_project {
     type = "string"
 }
+
 input api_gcp_service_key {
     type = "string"
 }
@@ -320,8 +338,8 @@ EOF
 
 task frontend_src {
     op = "fs.subtree"
-    src = monorepo.out
-    path = "code/web"
+    src = input.src
+    path = "crate/code/web"
 }
 input frontend_src {
     type = "fstree"
