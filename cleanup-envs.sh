@@ -25,6 +25,14 @@ cleanup_netlify() {
     done
 }
 
+cleanup_bl() {
+    export BL_API_URL=https://alpha.blocklayerhq.com/query
+
+    bl --workspace acme-corp line ls | \
+        awk -v "p=$protected" '$2 != p && NR > 1 { system("bl -w acme-corp line rm "$2); }'
+}
+
 cleanup_gke
 cleanup_sql
 cleanup_netlify
+cleanup_bl
