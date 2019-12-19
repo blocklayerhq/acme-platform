@@ -1,14 +1,10 @@
 package acme
 
-// cd monorepo && bl push staging
-// (either manually or from github action)
-block: staging: {
-	input: description: "acme staging config"
+template: acme: {
+	input: description: "source monorepo to deploy"
 	output: false
 
-	acmeSettings=settings: {
-		hostname: "staging.acme.infralabs.io"
-	}
+	acmeSettings=settings: hostname: string
 
 	block: frontend: {
 
@@ -28,10 +24,7 @@ block: staging: {
 				}
 				buildDirectory: "public"
 				buildScript:    "build:client"
-				siteName: 		"acme-staging"
 			}
-
-			keychain: token: "FIXME"
 		}
 
 		block: deploy: {
@@ -41,9 +34,18 @@ block: staging: {
 			input: from:          "../build"
 		}
 	}
-
 	block: api: {
 		// ...
 	}
+}
 
+// BLOCKS:
+
+// cd monorepo && bl push staging
+// (either manually or from github action)
+block: staging: {
+	fromTemplate: "acme"
+	settings: hostname: "staging.acme.infralabs.io"
+	block: frontend: block: deploy: settings: siteName: "acme-staging"
+	block: frontend: block: deploy: keychain: token:    "FIXME"
 }
