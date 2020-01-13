@@ -39,6 +39,19 @@ template: acme: {
 
 // BLOCKS:
 
+block: sandbox: {
+	block: [sandboxId=string]: {
+		fromTemplate: "acme"
+		settings: hostname: "\(sandboxId).sandbox.acme.infralabs.io"
+		block: frontend: {
+			block: deploy: {
+				settings: siteName: "acme-sandbox-\(sandboxId)"
+				keychain: token: shNetlifyToken
+			}
+		}
+	}
+}
+
 // cd monorepo && bl push staging
 // (either manually or from github action)
 block: staging: {
