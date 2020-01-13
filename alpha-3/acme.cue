@@ -45,5 +45,5 @@ block: staging: {
 	fromTemplate: "acme"
 	settings: hostname: "staging.acme.infralabs.io"
 	block: frontend: block: deploy: settings: siteName: "acme-staging"
-	block: frontend: block: deploy: keychain: token:    "FIXME"
+	block: frontend: block: deploy: keychain: token:    shNetlifyToken
 }
