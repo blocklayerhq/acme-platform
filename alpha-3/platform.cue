@@ -1,5 +1,3 @@
-package acme
-
 // Schema of a block as specified by the user
 Block :: {
 

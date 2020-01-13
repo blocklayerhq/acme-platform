@@ -1,5 +1,3 @@
-package acme
-
 template: acme: {
 	input: description: "source monorepo to deploy"
 	output: false

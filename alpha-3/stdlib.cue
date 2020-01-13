@@ -1,5 +1,3 @@
-package acme
-
 import (
 	"strconv"
 	"strings"
