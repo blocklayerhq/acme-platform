@@ -49,7 +49,4 @@ App :: Block & {
 			}
 		}
 	}
-	block: api: {
-		// ...
-	}
 }
