@@ -5,8 +5,6 @@ Netlify :: {
 	// Application code to deploy
 	input: true
 	
-	output: false
-	
 	info: url: string
 	
 	settings: {

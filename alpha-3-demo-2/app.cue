@@ -11,8 +11,6 @@ App :: {
 		},
 	]
 
-	output: false
-
 	block: frontend: {
 		connection: [
 			// Connect my own input to "build"
