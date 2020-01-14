@@ -14,7 +14,6 @@ App :: {
 	output: false
 
 	block: frontend: {
-
 		connection: [
 			// Connect my own input to "build"
 			{
@@ -27,7 +26,6 @@ App :: {
 				to:   "deploy"
 			},
 		]
-
 		block: {
 			hostname=settings.hostname
 
@@ -43,7 +41,6 @@ App :: {
 					buildScript:    "build:client"
 				}
 			}
-
 			deploy: Netlify & {
 				settings: {
 					createSite: true
@@ -51,7 +48,7 @@ App :: {
 				}
 			}
 		}
-
+	}
 	block: api: {
 		// ...
 	}
