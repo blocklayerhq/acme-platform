@@ -3,6 +3,8 @@
 App :: Block & {
 	settings: hostname: string
 
+	input: true
+
 	connection: [
 		// Connect my own input to "frontend"
 		{
