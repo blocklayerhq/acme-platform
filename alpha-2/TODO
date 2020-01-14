@@ -1,9 +1,0 @@
-
-
-- Make it easier to track which deployment comes from which git commit, with which additional changes
-- What happens if I override a source code input with a non-git repo?
-- Actually connect to API from web frontend
-- End-to-end: successful signup and login!
-- BUG: Frontend navigation is broken on refresh (Netlify routing)
-
-- Add support for AWS/EKS in addition to GCP/KubernetesEngine
