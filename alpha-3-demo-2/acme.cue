@@ -1,5 +1,3 @@
-package acme
-
 // Acme: acme clothing application
 
 settings: domain: string | *"acme.infralabs.io"

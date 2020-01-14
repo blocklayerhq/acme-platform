@@ -1,5 +1,3 @@
-package acme
-
 import (
 	"strings"
 )

@@ -1,5 +1,3 @@
-package acme
-
 Netlify :: {
 	// Official netlify controller
 	// https://netlify.com

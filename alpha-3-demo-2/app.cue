@@ -1,4 +1,3 @@
-package acme
 
 // A single instance of an Acme Clothing application
 App :: {
