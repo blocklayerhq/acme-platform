@@ -2,7 +2,7 @@ import (
 	"strings"
 )
 
-Yarn :: {
+Yarn :: Block & {
 	settings: {
 		environment: [envVar=string]: string
 		buildScript:    string | *"build"

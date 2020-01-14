@@ -1,6 +1,6 @@
 
 // A single instance of an Acme Clothing application
-App :: {
+App :: Block & {
 	settings: hostname: string
 
 	connection: [

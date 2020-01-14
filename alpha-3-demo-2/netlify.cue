@@ -1,4 +1,4 @@
-Netlify :: {
+Netlify :: Block & {
 	// Official netlify controller
 	// https://netlify.com
 
