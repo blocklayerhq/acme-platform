@@ -2,19 +2,21 @@
 
 settings: domain: string | *"acme.infralabs.io"
 
-// FIXME: how to define info values in the cue config? Is it possible?
+block: {
+	domain=settings.domain
 
-block: staging: {
-	from: App
-	withSettings: hostname: "staging.\(settings.domain)"
-}
+	staging: App & {
+		settings: hostname: "staging.\(domain)"
+	}
 
-block: pr: block: [prId=int]: {
-	from: App
-	withSettings: hostname: "\(prId).pr.\(settings.domain)"
-}
-
-block: sandbox: block: [sandboxId=string]: {
-	from: App
-	withSettings: hostname: "\(sandboxId).dev.\(settings.domain)"
+	pr: {
+		block: [prId=int]: App & {
+			settings: hostname: "\(prId).pr.\(domain)"
+		}
+	}
+	sandbox: {
+		block: [sandboxId=string]: App & {
+			settings: hostname: "\(sandboxId).dev.\(domain)"
+		}
+	}
 }

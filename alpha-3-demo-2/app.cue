@@ -28,32 +28,29 @@ App :: {
 			},
 		]
 
-		block: build: {
+		block: {
+			hostname=settings.hostname
 
-			from: Yarn
-
-			withSettings: {
-				writeEnvFile: ".env"
-				loadEnv:      false
-				environment: {
-					NODE_ENV: "production"
-					APP_URL:  "https://\(settings.hostname)"
+			build: Yarn & {
+				settings: {
+					writeEnvFile: ".env"
+					loadEnv:      false
+					environment: {
+						NODE_ENV: "production"
+						APP_URL:  "https://\(hostname)"
+					}
+					buildDirectory: "public"
+					buildScript:    "build:client"
 				}
-				buildDirectory: "public"
-				buildScript:    "build:client"
+			}
+
+			deploy: Netlify & {
+				settings: {
+					createSite: true
+					domain:     hostname
+				}
 			}
 		}
-
-		block: deploy: {
-
-			from: Netlify
-
-			withSettings: {
-				createSite: true
-				domain:     settings.hostname
-			}
-		}
-	}
 
 	block: api: {
 		// ...
