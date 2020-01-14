@@ -3,7 +3,7 @@
 settings: domain: string | *"acme.infralabs.io"
 
 block: {
-	domain=settings.domain
+	domain = settings.domain
 
 	staging: App & {
 		settings: hostname: "staging.\(domain)"

@@ -10,22 +10,21 @@ Yarn :: {
 		writeEnvFile:   string | *false
 		loadEnv:        bool | *true
 	}
-	
+
 	// Javascript source code to build
 	input: true
 	// Fully built javascript app
 	output: true
-	
+
 	code: {
 		os: "alpineLinux"
 		package: {
 			rsync: true
-			yarn: true
+			yarn:  true
 		}
-	
+
 		language: "bash"
-		dir: "./yarn.code"
-	
+		dir:      "./yarn.code"
 	}
 
 	{

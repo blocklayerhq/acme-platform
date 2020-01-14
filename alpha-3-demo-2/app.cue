@@ -25,7 +25,7 @@ App :: {
 			},
 		]
 		block: {
-			hostname=settings.hostname
+			hostname = settings.hostname
 
 			build: Yarn & {
 				settings: {
