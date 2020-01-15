@@ -5,7 +5,7 @@ Netlify :: Block & {
 	// Application code to deploy
 	input: true
 
-	info: url: string
+//	info: url: string
 
 	settings: {
 		siteName:   string
