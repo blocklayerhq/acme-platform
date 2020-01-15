@@ -7,16 +7,23 @@ block: {
 
 	staging: App & {
 		settings: hostname: "staging.\(domain)"
+		block: frontend: {
+			block: deploy: {
+				settings: siteName: "acme-staging"
+			}
+		}
 	}
 
 	pr: {
 		block: [prId=int]: App & {
 			settings: hostname: "\(prId).pr.\(domain)"
+			// FIXME: intentionally omitted netlify siteName to trigger a cue error
 		}
 	}
 	sandbox: {
 		block: [sandboxId=string]: App & {
 			settings: hostname: "\(sandboxId).dev.\(domain)"
+			// FIXME: intentionally omitted netlify siteName to trigger a cue error
 		}
 	}
 }

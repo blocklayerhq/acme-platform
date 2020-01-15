@@ -13,7 +13,7 @@ App :: Block & {
 		},
 	]
 
-	block: frontend: {
+	block: frontend: Block & {
 		connection: [
 			// Connect my own input to "build"
 			{
