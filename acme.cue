@@ -10,6 +10,7 @@ block: {
 		block: frontend: {
 			block: deploy: {
 				settings: siteName: "acme-staging"
+				keychain: token: shNetlifyToken
 			}
 		}
 	}
