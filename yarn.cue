@@ -31,15 +31,15 @@ Yarn :: Block & {
 			mkdir -p tmp/src
 			rsync -aH input/ tmp/src/
 
-			if [ "$(get setting loadEnv)" = 1 ]; then
+			if [ "$(settings get loadEnv)" = 1 ]; then
 				export $(cat tmp/env | xargs)
 			fi
 			(
 				cd tmp/src
 				yarn install --network-timeout 1000000
-				yarn run "$(get setting buildScript)"
+				yarn run "$(settings get buildScript)"
 			)
-			rsync -aH tmp/src/"$(get setting buildDirectory)"/ output/
+			rsync -aH tmp/src/"$(settings get buildDirectory)"/ output/
 			"""#
 	}
 

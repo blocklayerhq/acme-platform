@@ -40,32 +40,32 @@ Netlify :: Block & {
 
 			create_site() {
 				# FIXME: This doesn't enable HTTPS on the site.
-				url="https://api.netlify.com/api/v1/$(get setting account)/sites"
+				url="https://api.netlify.com/api/v1/$(settings get account)/sites"
 
-				response=$(curl -f -H "Authorization: Bearer $(get keychain token)" \
+				response=$(curl -f -H "Authorization: Bearer $(keychain get token)" \
 							-X POST -H "Content-Type: application/json" \
 							$url \
-							-d '{"subdomain": "$(get setting siteName)", "custom_domain": "$(get setting domain)"}'
+							-d '{"subdomain": "$(settings get siteName)", "custom_domain": "$(settings get domain)"}'
 						)
 				[ $? -ne 0 ] && echo "create site failed" && exit 1
 
 				echo $response | jq -r '.site_id'
 			}
 
-			site_id=$(curl -f -H "Authorization: Bearer $(get keychain token)" \
+			site_id=$(curl -f -H "Authorization: Bearer $(keychain get token)" \
 						https://api.netlify.com/api/v1/sites\?filter\=all | \
-						jq -r ".[] | select(.name==\"$(get setting siteName)\") | .id" \
+						jq -r ".[] | select(.name==\"$(settings get siteName)\") | .id" \
 					)
 			if [ -z "$site_id" ] ; then
-				if [ "$(get setting createSite)" != 1 ]; then
-					echo "Site $(get setting siteName) does not exist"
+				if [ "$(settings get createSite)" != 1 ]; then
+					echo "Site $(settings get siteName) does not exist"
 					exit 1
 				fi
 				site_id=$(create_site)
 			fi
 			netlify deploy \
 				--dir="$(pwd)/input" \
-				--auth="$(get keychain token)" \
+				--auth="$(keychain get token)" \
 				--site="$site_id" \
 				--message="Blocklayer 'netlify deploy'" \
 				--prod \
