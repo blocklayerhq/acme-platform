@@ -34,10 +34,11 @@ Yarn :: Block & {
 			if [ "$(settings get loadEnv)" = 1 ]; then
 				export $(cat tmp/env | xargs)
 			fi
+			buildScript="$(settings get buildScript)"
 			(
 				cd tmp/src
 				yarn install --network-timeout 1000000
-				yarn run "$(settings get buildScript)"
+				yarn run "$buildScript"
 			)
 			rsync -aH tmp/src/"$(settings get buildDirectory)"/ output/
 			"""#

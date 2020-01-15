@@ -45,7 +45,7 @@ Netlify :: Block & {
 				response=$(curl -f -H "Authorization: Bearer $(keychain get token)" \
 							-X POST -H "Content-Type: application/json" \
 							$url \
-							-d '{"subdomain": "$(settings get siteName)", "custom_domain": "$(settings get domain)"}'
+							-d "{\"subdomain\": \"$(settings get siteName)\", \"custom_domain\": \"$(settings get domain)\"}"
 						)
 				[ $? -ne 0 ] && echo "create site failed" && exit 1
 
@@ -57,7 +57,7 @@ Netlify :: Block & {
 						jq -r ".[] | select(.name==\"$(settings get siteName)\") | .id" \
 					)
 			if [ -z "$site_id" ] ; then
-				if [ "$(settings get createSite)" != 1 ]; then
+				if [ "$(settings get createSite)" != true ]; then
 					echo "Site $(settings get siteName) does not exist"
 					exit 1
 				fi
