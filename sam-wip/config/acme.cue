@@ -1,4 +1,4 @@
-package main
+package acme
 
 // Acme: acme clothing application
 
