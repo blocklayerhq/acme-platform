@@ -1,7 +1,11 @@
 
 // A single instance of an Acme Clothing application
 App :: Block & {
-	settings: hostname: string
+	settings: {
+		hostname: string
+		netlifySite: string
+	}
+	keychain: netlifyToken: string
 
 	input: true
 
@@ -28,6 +32,8 @@ App :: Block & {
 		]
 		block: {
 			hostname = settings.hostname
+			netlifySite = settings.netlifySite
+			netlifyToken = keychain.netlifyToken
 
 			build: Yarn & {
 				settings: {
@@ -45,7 +51,9 @@ App :: Block & {
 				settings: {
 					createSite: true
 					domain:     hostname
+					siteName:   netlifySite
 				}
+				keychain: token: netlifyToken
 			}
 		}
 	}
