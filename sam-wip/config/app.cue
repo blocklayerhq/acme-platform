@@ -1,23 +1,19 @@
 package main
 
 import (
-	"bl.templates/yarn"
-	"bl.templates/netlify"
+	"b.l/bl"
+	"b.l/templates/yarn"
+	"b.l/templates/netlify"
 )
 
 // A single instance of an Acme Clothing application
-App :: Block & {
+App :: bl.Block & {
 	settings: {
-		hostname: string
+		hostname:        string
 		netlifySiteName: string
 	}
 
-	keychain: {
-		netlifyToken: string
-	}
-
-	input: true
-
+	keychain: netlifyToken: string
 	connection: [
 		// Connect my own input to "frontend"
 		{
@@ -25,8 +21,9 @@ App :: Block & {
 			to:      "frontend"
 		},
 	]
+	input: true
 
-	block: frontend: Block & {
+	block: frontend: {
 		connection: [
 			// Connect my own input to "build"
 			{
@@ -60,7 +57,7 @@ App :: Block & {
 				settings: {
 					createSite: true
 					domain:     hostname
-					siteName: 	netlifySiteName
+					siteName:   netlifySiteName
 				}
 				keychain: token: netlifyToken
 			}

@@ -1,30 +1,36 @@
 package main
 
-// Acme: acme clothing application
+import (
+	"b.l/bl"
+)
 
-settings: domain: string | *"acme.infralabs.io"
+bl.Block & {
+	// Acme: acme clothing application
 
-block: {
-	domain = settings.domain
+	settings: domain: string | *"acme.infralabs.io"
 
-	staging: App & {
-		settings: {
-			hostname: "staging.\(domain)"
-			netlifySiteName: "acme-staging"
+	block: {
+		domain = settings.domain
+
+		staging: App & {
+			settings: {
+				hostname:        "staging.\(domain)"
+				netlifySiteName: "acme-staging"
+			}
+			keychain: netlifyToken: shNetlifyToken
 		}
-		keychain: netlifyToken: shNetlifyToken
-	}
 
-	// pr: {
-	// 	block: [prId=int]: App & {
-	// 		settings: hostname: "\(prId).pr.\(domain)"
-	// 		// FIXME: intentionally omitted netlify siteName to trigger a cue error
-	// 	}
-	// }
-	// sandbox: {
-	// 	block: [sandboxId=string]: App & {
-	// 		settings: hostname: "\(sandboxId).dev.\(domain)"
-	// 		// FIXME: intentionally omitted netlify siteName to trigger a cue error
-	// 	}
-	// }
+		// pr: {
+		//  block: [prId=int]: App & {
+		//   settings: hostname: "\(prId).pr.\(domain)"
+		//   // FIXME: intentionally omitted netlify siteName to trigger a cue error
+		//  }
+		// }
+		// sandbox: {
+		//  block: [sandboxId=string]: App & {
+		//   settings: hostname: "\(sandboxId).dev.\(domain)"
+		//   // FIXME: intentionally omitted netlify siteName to trigger a cue error
+		//  }
+		// }
+	}
 }

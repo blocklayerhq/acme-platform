@@ -1,1 +1,1 @@
-module: ""
+module: "infralabs.io/acme"
