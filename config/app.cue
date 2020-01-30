@@ -1,7 +1,20 @@
+package main
+
+import (
+	"bl.templates/yarn"
+	"bl.templates/netlify"
+)
 
 // A single instance of an Acme Clothing application
 App :: Block & {
-	settings: hostname: string
+	settings: {
+		hostname: string
+		netlifySiteName: string
+	}
+
+	keychain: {
+		netlifyToken: string
+	}
 
 	input: true
 
@@ -28,8 +41,10 @@ App :: Block & {
 		]
 		block: {
 			hostname = settings.hostname
+			netlifySiteName = settings.netlifySiteName
+			netlifyToken = keychain.netlifyToken
 
-			build: Yarn & {
+			build: yarn & {
 				settings: {
 					writeEnvFile: ".env"
 					loadEnv:      false
@@ -41,11 +56,13 @@ App :: Block & {
 					buildScript:    "build:client"
 				}
 			}
-			deploy: Netlify & {
+			deploy: netlify & {
 				settings: {
 					createSite: true
 					domain:     hostname
+					siteName: 	netlifySiteName
 				}
+				keychain: token: netlifyToken
 			}
 		}
 	}
