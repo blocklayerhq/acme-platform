@@ -35,7 +35,7 @@ App :: Block & {
 		block: {
 			hostname = settings.hostname
 			
-            build: yarn & {
+            build: Block & yarn & {
 				settings: {
 					writeEnvFile: ".env"
 					loadEnv:      false
@@ -47,7 +47,7 @@ App :: Block & {
 					buildScript:    "build:client"
 				}
 			}
-			deploy: netlify & {
+			deploy: Block & netlify & {
 				settings: {
 					createSite: true
 					domain:     hostname
