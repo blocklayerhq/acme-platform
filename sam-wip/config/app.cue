@@ -7,14 +7,7 @@ import (
 
 // A single instance of an Acme Clothing application
 App :: Block & {
-	settings: {
-		hostname: string
-		netlifySiteName: string
-	}
-
-	keychain: {
-		netlifyToken: string
-	}
+    settings: hostname: string
 
 	input: true
 
@@ -41,10 +34,8 @@ App :: Block & {
 		]
 		block: {
 			hostname = settings.hostname
-			netlifySiteName = settings.netlifySiteName
-			netlifyToken = keychain.netlifyToken
-
-			build: yarn & {
+			
+            build: yarn & {
 				settings: {
 					writeEnvFile: ".env"
 					loadEnv:      false
@@ -60,9 +51,7 @@ App :: Block & {
 				settings: {
 					createSite: true
 					domain:     hostname
-					siteName: 	netlifySiteName
 				}
-				keychain: token: netlifyToken
 			}
 		}
 	}

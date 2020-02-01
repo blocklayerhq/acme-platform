@@ -8,11 +8,13 @@ block: {
 	domain = settings.domain
 
 	staging: App & {
-		settings: {
-			hostname: "staging.\(domain)"
-			netlifySiteName: "acme-staging"
+		settings: hostname: "staging.\(domain)"
+		block: frontend: {
+			block: deploy: {
+				settings: siteName: "acme-staging"
+				keychain: token: shNetlifyToken
+			}
 		}
-		keychain: netlifyToken: shNetlifyToken
 	}
 
 	// pr: {
