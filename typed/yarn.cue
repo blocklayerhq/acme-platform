@@ -59,5 +59,9 @@ JSApp :: {
 	}
 
 	// Output of yarn build
-	build: buildScript.workdir.subdirectory & { path: buildDirectory }
+	// FIXME: prevent escaping /src with ..
+	build: bl.Subdirectory & {
+		root: buildScript.mount."/src"
+		path: buildDirectory
+	}
 }
