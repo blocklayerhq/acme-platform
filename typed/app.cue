@@ -1,7 +1,8 @@
+package main
+
 import (
-	"yarnpkg.com/yarn"
-	"netlify.com/netlify"
-	"b.l/bl"
+	"infralabs.io/acme/bl"
+	"infralabs.io/acme/templates"
 )
 
 // A single instance of an Acme Clothing application
@@ -15,9 +16,8 @@ App :: {
 		db: {}
 	}
 	frontend: {
-		app: yarn.App & {
-			// source: monorepo.subdirectory & { path: "crate/code/web" }
-			source: monorepo
+		app: templates.Yarn & {
+			source:       monorepo & {path: "crate/code/web"}
 			writeEnvFile: ".env"
 			loadEnv:      false
 			environment: {
@@ -28,8 +28,8 @@ App :: {
 			buildScript:    "build:client"
 		}
 
-		deploy: netlify.Site & {
-			artifact: app.build
+		deploy: templates.Netlify & {
+			artifact:   app.build
 			createSite: true
 			domain:     hostname
 		}

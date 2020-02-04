@@ -1,3 +1,5 @@
+package main
+
 // Acme: acme clothing application
 
 App & {
