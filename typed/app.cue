@@ -16,8 +16,10 @@ App :: {
 	}
 	frontend: {
 		app: yarn.App & {
-			// source: monorepo.subdirectory & { path: "crate/code/web" }
-			source: monorepo
+			source: bl.Subdirectory & {
+				root: monorepo
+				path: "crate/code/web"
+			}
 			writeEnvFile: ".env"
 			loadEnv:      false
 			environment: {
