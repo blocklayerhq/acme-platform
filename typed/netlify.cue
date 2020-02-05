@@ -23,11 +23,11 @@ Site :: {
 	token: bl.Secret & { value: string }
 
 	// Deployment url
-	url: deploy.mount."info/url".contents
+	url: deploy.mount."/info/url".contents
 
 	deploy: bl.BashScript & {
 
-		mount: "info/url": {
+		mount: "/info/url": {
 			type: "value"
 			contents: string
 		}

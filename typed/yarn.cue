@@ -35,16 +35,20 @@ JSApp :: {
 		if loadEnv {
 			environment: environment
 		}
-		environment: YARN_BUILD_SCRIPT: yarnScript
+		environment: {
+			YARN_BUILD_SCRIPT: yarnScript
+			YARN_CACHE_FOLDER: "/cache/yarn"
+		}
 
 		workdir: "/src"
 		mount: "/src": {
 			type: "readOnly"
 			from: source
 		}
-		mount: "cache/yarn": {
+		mount: "/cache/yarn": {
 			type: "cache"
 		}
+
 		if writeEnvFile != "" {
 			mount: writeEnvFile: {
 				type: "text"
