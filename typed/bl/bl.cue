@@ -132,6 +132,8 @@ BashScript :: {
 
 	workdir: string | *"/"
 
+	dependsOn: _
+
 	...
 }
 

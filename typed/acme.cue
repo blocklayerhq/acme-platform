@@ -22,11 +22,10 @@ test: {
 			code: """
 					echo 2
 					"""
+			dependsOn: test.foo
 		},
 		bl.BashScript & {
-			code: """
-					echo 3
-					"""
+			code: foo.code
 		},
 		bl.BashScript & {
 			code: """
