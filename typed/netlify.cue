@@ -91,7 +91,7 @@ Site :: {
 			# enable SSL
 			curl -i -X POST "https://api.netlify.com/api/v1/sites/${site_id}/ssl"
 			
-			<tmp/stdout sed -n -e 's/^Live URL:.*\(https:\/\/.*\)$/\1/p' > info/url
+			<tmp/stdout sed -n -e 's/^Live URL:.*\(https:\/\/.*\)$/\1/p' > /info/url
 			"""#
 	}
 }
