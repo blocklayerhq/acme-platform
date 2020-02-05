@@ -4,7 +4,7 @@ import (
 
 Site :: {
 	// Contents of the application to deploy
-	app: bl.Directory
+	bundle: bl.Directory
 
 	// Deploy to this Netlify site
 	name:   string

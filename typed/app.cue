@@ -30,8 +30,8 @@ App :: {
 			buildScript:    "build:client"
 		}
 
-		deploy: netlify.Site & {
-			artifact: app.build
+		netlifySite: netlify.Site & {
+			bundle: app.build
 			createSite: true
 			domain:     hostname
 		}
