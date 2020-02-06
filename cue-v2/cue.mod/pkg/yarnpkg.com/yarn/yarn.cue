@@ -28,7 +28,7 @@ App :: {
 	buildDirectory: string | *"build"
 
 	// Execute this script to build the app
-	buildScript: bl.BashScript & {
+	action: build: bl.BashScript & {
 		code: """
 			yarn install --network-timeout 1000000
 			yarn run "$YARN_BUILD_SCRIPT"
@@ -66,6 +66,8 @@ App :: {
 
 	// Output of yarn build
 	// FIXME: prevent escaping /src with ..
-	build: (bl.Subdirectory & {root: buildScript.rootfs, path: buildScript.workdir + "/" + buildDirectory}).output
+	build: (bl.Subdirectory & {
+		input: action.build.rootfs
+		path: action.build.workdir + "/" + buildDirectory}).output
 }
 

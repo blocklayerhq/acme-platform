@@ -17,7 +17,7 @@ Frontend :: {
 			APP_URL:  "https://\(hostname)"
 		}
 		buildDirectory: "public"
-		buildScript:    "build:client"
+		yarnScript: "build:client"
 	}
 
 	netlify: ntlfy.Account
