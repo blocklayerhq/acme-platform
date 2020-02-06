@@ -46,7 +46,7 @@ BashScript :: {
 		} |
 		{
 			type: "text" | "value"
-			contents: string
+			contents: _
 		} | {
 			"type": "copy"
 			from: Directory
