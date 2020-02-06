@@ -1,3 +1,5 @@
+package acme
+
 import (
 	"b.l/bl"
 )
@@ -9,16 +11,10 @@ App :: {
 	url: frontend.url
 
 	api: Api & {
-		container: source: bl.Subdirectory & {
-			root: monorepo
-			path: "crate/code/api"
-		}
+		container: source: (bl.Subdirectory & {input: monorepo, path: "crate/code/api"}).output
 	}
 
 	frontend: Frontend & {
-		app: source: bl.Subdirectory & {
-			root: monorepo
-			path: "crate/code/web"
-		}
+		app: source: (bl.Subdirectory & {input: monorepo, path: "crate/code/web"}).output
 	}
 }

@@ -1,3 +1,5 @@
+package netlify
+
 import (
 	"b.l/bl"
 )
@@ -20,12 +22,12 @@ Site :: {
 	account:    string | *""
 
 	// Netlify authentication token
-	token: bl.Secret & { value: string }
+	token: Secret & { value: string }
 
 	// Deployment url
 	url: deploy.mount["/info/url"].contents
 
-	deploy: bl.BashScript & {
+	deploy: BashScript & {
 
 		mount: "/info/url": {
 			type: "value"

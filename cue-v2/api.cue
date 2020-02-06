@@ -1,4 +1,8 @@
+package acme
+
 import (
+	"strings"
+	"mysql.com/mysql"
 	"nodejs.org/nodejs"
 	"kubernetes.io/kubernetes"
 	"cloud.google.com/googlecloud"
@@ -24,7 +28,7 @@ Api :: {
 	// This enforces immutability, as long as nobody else overwrites the tag.
 	safeTag = container.source.digest
 
-	repository: gcp.GCR & {
+	repository: gcp.GCR.Repository & {
 		name: *"acme-clothing-api" | string
 		// Push to a safe, immutable tag
 		tag: "\(safeTag)": container.image
@@ -39,7 +43,7 @@ Api :: {
 	// This is a similar pattern to the SQL interface in Go.
 	kub: kubernetes.App & {
 		// Use legacy yaml config as a base, and add a "smart" overlay
-		baseConfig = kubernetes.YamlDir & { path: "./kubernetes_base" }
+		baseConfig = (kubernetes.YamlDirectory & { dir: "./kubernetes_base" }).config
 		config: baseConfig & {
 			deployment: "acme-clothing-api": spec: {
 				container: api: image: "\(repository.ref):\(safeTag)"
@@ -54,10 +58,10 @@ Api :: {
 					}
 				}
 			}
-			secret: "api-db-config": stringData: json: json.Marshal(api.db.appConfig)
+			secret: "api-db-config": stringData: json: json.Marshal(db.appConfig)
 		}
 		// swappable implementation goes here
-		cluster: gcp.GKECluster & {
+		cluster: gcp.GKE.Cluster & {
 			name: *"cluster"|string
 			zone: *"us-west2" | string
 			create: *true | bool
@@ -73,7 +77,7 @@ Api :: {
 		// the native GCP package for this.
 		mysql.Database & {
 			// Use the API hostname as a default database name
-			name: *api.hostname | string
+			name: *hostname | string
 			// Automatically create the database by default
 			create: *true | bool
 		}

@@ -1,3 +1,5 @@
+package acme
+
 import (
 	"yarnpkg.com/yarn"
 	ntlfy "netlify.com/netlify"

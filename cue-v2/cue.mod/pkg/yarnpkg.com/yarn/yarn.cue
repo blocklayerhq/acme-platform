@@ -1,10 +1,12 @@
+package yarn
+
 import (
 	"strings"
 	"b.l/bl"
 )
 
 // A javascript application built by Yarn
-JSApp :: {
+App :: {
 	// Source code of the javascript application
 	source: bl.Directory
 
@@ -42,7 +44,7 @@ JSApp :: {
 
 		workdir: "/src"
 		mount: "/src": {
-			type: "readOnly"
+			type: "copy"
 			from: source
 		}
 		mount: "/cache/yarn": {
@@ -64,8 +66,6 @@ JSApp :: {
 
 	// Output of yarn build
 	// FIXME: prevent escaping /src with ..
-	build: bl.Subdirectory & {
-		root: buildScript.mount["/src"]
-		path: buildDirectory
-	}
+	build: (bl.Subdirectory & {root: buildScript.rootfs, path: buildScript.workdir + "/" + buildDirectory}).output
 }
+
