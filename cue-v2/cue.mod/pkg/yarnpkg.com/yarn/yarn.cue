@@ -66,8 +66,9 @@ App :: {
 
 	// Output of yarn build
 	// FIXME: prevent escaping /src with ..
-	build: (bl.Subdirectory & {
-		input: action.build.rootfs
-		path: action.build.workdir + "/" + buildDirectory}).output
+	build: bl.Directory & {
+		root: action.build.rootfs
+		path: action.build.workdir + "/" + buildDirectory
+	}
 }
 

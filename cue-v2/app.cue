@@ -6,15 +6,15 @@ import (
 
 // A single instance of an Acme Clothing application
 App :: {
-	monorepo: bl.Directory | *bl.EmptyDirectory
+	monorepo: bl.Directory
 
 	url: frontend.url
 
 	api: Api & {
-		container: source: (bl.Subdirectory & {input: monorepo, path: "crate/code/api"}).output
+		container: source: bl.Directory & { root: monorepo, path: "crate/code/api" }
 	}
 
 	frontend: Frontend & {
-		app: source: (bl.Subdirectory & {input: monorepo, path: "crate/code/web"}).output
+		app: source: bl.Directory & { root: monorepo, path: "crate/code/web" }
 	}
 }
