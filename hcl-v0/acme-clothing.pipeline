@@ -1,4 +1,3 @@
-			project: "
 
 output url {
     type = "string"
@@ -135,22 +134,27 @@ input api_gcp_service_key {
 }
 
 task api_docker_repo {
-    op = "gcr.push"
-    image = api_docker_image.out
-    # FIXME: this should be namespaced by pipeline name!
-    name = "acme-clothing-api"
-    # FIXME: Since we're building from an input, we shouldn't use the task's git
-    # commit as a tag
-    tag = monorepo.commit
-    project = input.api_gcp_project
-    service-key = input.api_gcp_service_key
+op = "text.printf"
+fmt = "temporarily disabled"
+// FIXME: temporary disabled because we removed our test Google Cloud account
+//    op = "gcr.push"
+//    image = api_docker_image.out
+//    # FIXME: this should be namespaced by pipeline name!
+//    name = "acme-clothing-api"
+//    # FIXME: Since we're building from an input, we shouldn't use the task's git
+//    # commit as a tag
+//    tag = monorepo.commit
+//    project = input.api_gcp_project
+//    service-key = input.api_gcp_service_key
 }
 
 task api_kubernetes_config {
     op = "text.template"
     syntax = "shell"
     src = input.api_kubernetes_config_src
-    vars_IMG = api_docker_repo.full-name
+// FIXME: temporarily disabled because we removed our test Google Cloud account
+//     vars_IMG = api_docker_repo.full-name
+    vars_IMG = "localhost:4242/temporary_disabled_see_blueprint"
     vars_DB_CONFIG = api_db_config.out
     vars_API_HOSTNAME = api_dns_record_name.out
 }
@@ -255,15 +259,19 @@ EOF
 
 // FIXME: rename to api_kubernetes_namespace
 task api_deployment {
-    op = "gke.deploy-file"
-    // tool = "kubectl"
-    src = api_kubernetes_config.out
-    project = input.api_gcp_project
-    service-key = input.api_gcp_service_key
-    kubernetes-cluster = input.api_deployment_cluster
-    // FIXME: rename the bot input 'region' to the more accurate 'compute_zone'
-    region = input.api_deployment_compute_zone
-    namespace = input.api_deployment_namespace
+
+	op = "text.printf"
+	fmt = "temporarily disabled"
+// FIXME: temporarily disabled because we removed our test Google Cloud account
+//    op = "gke.deploy-file"
+//    // tool = "kubectl"
+//    src = api_kubernetes_config.out
+//    project = input.api_gcp_project
+//    service-key = input.api_gcp_service_key
+//    kubernetes-cluster = input.api_deployment_cluster
+//    // FIXME: rename the bot input 'region' to the more accurate 'compute_zone'
+//    region = input.api_deployment_compute_zone
+//    namespace = input.api_deployment_namespace
 }
 input api_deployment_compute_zone {
     type = "string"
@@ -284,11 +292,13 @@ task api_deployment_url {
 }
 
 task api_db {
-    op = "mysql.create-db"
-    db_name = annotation_key.out
-    host = input.api_db_host_public
-    admin_user = input.api_db_admin_user
-    admin_password = input.api_db_admin_password
+	op = "text.printf"
+	fmt = "temporarily disabled"
+//    op = "mysql.create-db"
+//    db_name = annotation_key.out
+//    host = input.api_db_host_public
+//    admin_user = input.api_db_admin_user
+//    admin_password = input.api_db_admin_password
 }
 // DB public IP is authorized from the agent IP.
 // We use it to provision the DB from the bot directly
