@@ -2,7 +2,7 @@
 package main
 
 import (
-	"github.com/github"
+	"stackbrew.io/github"
 	"acme.infralabs.io/acme"
 )
 

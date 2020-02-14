@@ -1,8 +1,8 @@
 package acme
 
 import (
-	"yarnpkg.com/yarn"
-	ntlfy "netlify.com/netlify"
+	"stackbrew.io/yarn"
+	ntlfy "stackbrew.io/netlify"
 	"strings"
 )
 

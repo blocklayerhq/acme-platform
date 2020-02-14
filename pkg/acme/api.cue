@@ -2,10 +2,10 @@ package acme
 
 import (
 	"strings"
-	"mysql.com/mysql"
-	"nodejs.org/nodejs"
-	"kubernetes.io/kubernetes"
-	"cloud.google.com/googlecloud"
+	"stackbrew.io/mysql"
+	"stackbrew.io/nodejs"
+	"stackbrew.io/kubernetes"
+	"stackbrew.io/googlecloud"
 )
 
 Api :: {
