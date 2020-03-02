@@ -1,17 +1,21 @@
 package acme
 
+import (
+	"b.l/bl"
+)
+
 // A single instance of an Acme Clothing application
 App :: {
 	// Source checkout of acme monorepo (frontend & api)
-	monorepo: Directory
+	monorepo: bl.Directory
 
 	url: frontend.url
 
 	api: Api & {
-		container: source: Directory & { root: monorepo, path: "crate/code/api" }
+		container: source: bl.Directory & { root: monorepo, path: "crate/code/api" }
 	}
 
 	frontend: Frontend & {
-		app: source: Directory & { root: monorepo, path: "crate/code/web" }
+		app: source: bl.Directory & { root: monorepo, path: "crate/code/web" }
 	}
 }
