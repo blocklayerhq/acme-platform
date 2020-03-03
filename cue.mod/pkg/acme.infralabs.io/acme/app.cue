@@ -12,10 +12,10 @@ App :: {
 	url: frontend.url
 
 	api: Api & {
-		container: source: bl.Directory & { root: monorepo, path: "crate/code/api" }
+		container: source: bl.Directory & { from: monorepo, path: "crate/code/api" }
 	}
 
 	frontend: Frontend & {
-		app: source: bl.Directory & { root: monorepo, path: "crate/code/web" }
+		app: source: bl.Directory & { from: monorepo, path: "crate/code/web" }
 	}
 }
