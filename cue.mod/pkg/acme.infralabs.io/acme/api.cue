@@ -26,7 +26,9 @@ Api :: {
 
 	// Use source code digest as a reliable tag to push to.
 	// This enforces immutability, as long as nobody else overwrites the tag.
-	safeTag = container.source.digest
+	// FIXME: currently bl.Directory does not expose a `digest` field
+	// safeTag = container.source.digest
+	safeTag = "FIXME"
 
 	repository: gcp.GCR.Repository & {
 		name: *"acme-clothing-api" | string

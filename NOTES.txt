@@ -1,0 +1,13 @@
+
+
+- bl.Directory:
+	- Clearer public API
+		- `local` is confusing
+		- `from` vs `root` ?
+	- If `ref` is exposed, expose the struct to more easily the digest etc
+
+	- It would be very useful to get a reliable `digest` field for every directory.
+		--> see acme.infralabs.io/acme.App.api for an example
+		--> is this possible? If so, how?
+		
+
