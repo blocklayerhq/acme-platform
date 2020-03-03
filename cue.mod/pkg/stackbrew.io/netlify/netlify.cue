@@ -9,7 +9,7 @@ Site :: {
 	contents: bl.Directory
 
 	// Deploy to this Netlify site
-	name:   string
+	name: string
 
 	// Host the site at this address
 	domain: string
@@ -19,28 +19,28 @@ Site :: {
 
 	// Use this Netlify account name
 	// (also referred to as "team" in the Netlify docs)
-	account:    string | *""
+	account: string | *""
 
 	// Netlify authentication token
-	token: bl.Secret & { value: string }
+	token: bl.Secret & {value: string}
 
 	// Deployment url
-	url: deploy.mount["/info/url"].contents
+	url: deploy.output["/info/url"]
 
 	deploy: bl.BashScript & {
 
-		mount: "/info/url": {
-			type: "value"
-			contents: string
-		}
+		workdir: "/site/contents"
+		input: "/site/contents": contents
+
+		output: "/info/url": string
 
 		environment: {
 			NETLIFY_AUTH_TOKEN: token.value
-			NETLIFY_SITE_NAME: name
+			NETLIFY_SITE_NAME:  name
 			if (create) {
 				NETLIFY_SITE_CREATE: "1"
 			}
-			NETLIFY_DOMAIN: domain
+			NETLIFY_DOMAIN:  domain
 			NETLIFY_ACCOUNT: account
 		}
 
@@ -83,7 +83,7 @@ Site :: {
 			    site_id=$(create_site)
 			fi
 			netlify deploy \
-			    --dir="$(pwd)/input" \
+			    --dir="$(pwd)" \
 			    --auth="$NETLIFY_AUTH_TOKEN" \
 			    --site="$site_id" \
 			    --message="Blocklayer 'netlify deploy'" \
