@@ -22,7 +22,7 @@ AcmeAdvanced :: {
 	// Staging instance
 	staging: acme.App & {
 		frontend: hostname: "staging.\(domain)"
-		api: hostname: "staging.\(apiDomain)"
+		// api: hostname: "staging.\(apiDomain)"
 		frontend: site: name: "acme-demo"
 	}
 	
@@ -31,7 +31,7 @@ AcmeAdvanced :: {
 		for prId, pr in monorepo.pr {
 			"\(prId)": acme.App & {
 				frontend: hostname: "pr-\(prId).\(domain)"
-				api: hostname: "pr-\(prId).\(apiDomain)"
+				// api: hostname: "pr-\(prId).\(apiDomain)"
 				frontend: site: name: "acme-pr-\(prId)"
 				monorepo: pr.branch.tip.checkout
 			}

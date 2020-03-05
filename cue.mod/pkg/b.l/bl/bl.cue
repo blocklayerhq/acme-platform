@@ -4,6 +4,10 @@ import (
 	"strings"
 )
 
+Secret :: {
+	value: _
+}
+
 Dockerfile :: {
 	package: [pkg=string]: true
 	package: bash:         true // always install bash
@@ -41,8 +45,6 @@ Directory :: {
 		local: string
 	}
 	path: string | *"/"
-
-	digest: string
 }
 
 Cache :: {

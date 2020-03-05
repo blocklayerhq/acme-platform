@@ -11,9 +11,10 @@ App :: {
 
 	url: frontend.url
 
-	api: Api & {
-		container: source: bl.Directory & { from: monorepo, path: "crate/code/api" }
-	}
+	// FIXME: API temporarily disabled until frontend is solid on alpha-3
+	// api: Api & {
+	// 	container: source: bl.Directory & { from: monorepo, path: "crate/code/api" }
+	// }
 
 	frontend: Frontend & {
 		app: source: bl.Directory & { from: monorepo, path: "crate/code/web" }
