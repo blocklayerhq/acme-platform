@@ -6,9 +6,6 @@ import (
 	"strings"
 )
 
-value : string | int
-message: string
-
 Frontend :: {
 	hostname: string
 	url: "https://\(hostname)"
