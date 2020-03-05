@@ -5,12 +5,15 @@ import (
 	"acme.infralabs.io/acme"
 )
 
-AcmeSimple :: {
-	staging: acme.App & {
-		// api: hostname: "staging.acme-api.infralabs.io"
-		frontend: {
-			site: name: "acme-demo"
-			hostname: "staging.acme.infralabs.io"
+staging: acme.App & {
+	// api: hostname: "staging.acme-api.infralabs.io"
+	frontend: {
+		netlifyAccount: {
+			token: _
+			name: _
 		}
+		site: name: "acme-demo"
+		hostname: "staging.acme.infralabs.io"
 	}
 }
+
