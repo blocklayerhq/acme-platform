@@ -25,3 +25,12 @@
 
 		- Example: `netlify.Account` doesn't exist, but executed Yarn build first
 
+
+- UX
+
+	- The less I have to remember for my hello world config, the better. Implicit 'package main' would be nice.
+
+	- Would be cool if I could `bl push` a plain cue config file, instead of a while directory, for simple use case. eg.
+		```
+		echo 'hello: "world"' | bl push --config acme.infralabs.io  -
+		```
