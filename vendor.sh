@@ -15,13 +15,18 @@ function main() {
 		mkdir -p cue.mod/pkg/stackbrew.io
 	fi
 
+	tmp="$(mktemp -d)"
 	curl \
 		-L \
 		https://github.com/stackbrew/stackbrew/archive/master.tar.gz \
 	| tar \
-		-C cue.mod/pkg/stackbrew.io \
-		--strip-components=2 \
-		-zxv
+		-C "$tmp" \
+		--strip-components=1 \
+		-zx
+
+	rsync --delete -aH "$tmp/pkg/" cue.mod/pkg/stackbrew.io/
+	git add cue.mod/pkg/stackbrew.io/
+	rm -fr "$tmp"
 }
 
 function fatal() {
