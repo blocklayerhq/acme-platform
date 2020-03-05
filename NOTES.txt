@@ -11,3 +11,17 @@
 		--> is this possible? If so, how?
 		
 
+
+
+- Errors
+
+	- Error messages are often not clear
+
+	- `bl push` does not print error message
+
+	- `bl change info` does not print error message
+
+	- Some errors seem to arrive late
+
+		- Example: `netlify.Account` doesn't exist, but executed Yarn build first
+
