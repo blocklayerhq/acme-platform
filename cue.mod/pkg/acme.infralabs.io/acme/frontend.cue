@@ -2,7 +2,7 @@ package acme
 
 import (
 	"stackbrew.io/yarn"
-	ntlfy "stackbrew.io/netlify"
+	"stackbrew.io/netlify"
 	"strings"
 )
 
@@ -21,10 +21,11 @@ Frontend :: {
 		yarnScript: "build:client"
 	}
 
-	netlify: ntlfy.Account
+	netlifyAccount: netlify.Account
 
     // Netlify site hosting the webapp
 	site: netlify.Site & {
+		account: netlifyAccount
 		contents: app.build
 		create: *true | bool
 		domain: hostname
