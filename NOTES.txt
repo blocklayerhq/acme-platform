@@ -34,3 +34,8 @@
 		```
 		echo 'hello: "world"' | bl push --config acme.infralabs.io  -
 		```
+
+
+- bl.BashScript
+
+	- BashScript.output does not create parent directories for me. It would be nice if it did
