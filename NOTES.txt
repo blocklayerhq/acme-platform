@@ -10,7 +10,10 @@
 		--> see acme.infralabs.io/acme.App.api for an example
 		--> is this possible? If so, how?
 		
-
+	- Which version of a directory was uploaded to which change ID?
+		--> Was it a clean git commit? Or did it include a local change?
+		--> It would be useful to allow interactive directory exploration
+			(list files, get checksum, cat file etc)
 
 
 - Errors
@@ -39,3 +42,9 @@
 - bl.BashScript
 
 	- BashScript.output does not create parent directories for me. It would be nice if it did
+
+
+- Change lifecycle
+
+	- On merge conflicts, the config wins. Auto-remove overlay values if a config change breaks them
+	- BONUS: detect moves in a change, and optionally auto-move the overlay value
