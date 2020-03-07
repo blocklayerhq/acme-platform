@@ -1,7 +1,0 @@
-{
-  "name": "test",
-  "main": "index.js",
-  "scripts": {
-	  "build": "mkdir -p ./build && echo output > ./build/test && touch .env && cp .env ./build/"
-  }
-}
