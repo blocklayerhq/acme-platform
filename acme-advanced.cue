@@ -3,7 +3,6 @@ package main
 
 //// import (
 //// 	"stackbrew.io/github"
-//// 	"acme.infralabs.io/acme"
 //// )
 //// 
 //// // Advanced ACME dev stack
@@ -19,7 +18,7 @@ package main
 //// apiDomain: *"acme-api.infralabs.io" | string
 //// 
 //// // Staging instance
-//// staging: acme.App & {
+//// staging: AcmeApp & {
 //// 	frontend: hostname: "staging.\(domain)"
 //// 	// api: hostname: "staging.\(apiDomain)"
 //// 	frontend: site: name: "acme-demo"
@@ -28,7 +27,7 @@ package main
 //// // Deploy a review instance for each PR
 //// prReview: {
 //// 	for prId, pr in monorepo.pr {
-//// 		"\(prId)": acme.App & {
+//// 		"\(prId)": AcmeApp & {
 //// 			frontend: hostname: "pr-\(prId).\(domain)"
 //// 			// api: hostname: "pr-\(prId).\(apiDomain)"
 //// 			frontend: site: name: "acme-pr-\(prId)"

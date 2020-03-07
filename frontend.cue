@@ -1,12 +1,11 @@
-package acme
+package main
 
 import (
 	"stackbrew.io/yarn"
 	"stackbrew.io/netlify"
-	"strings"
 )
 
-Frontend :: {
+AcmeFrontend :: {
 	hostname: string
 	url: "https://\(hostname)"
 

@@ -1,4 +1,4 @@
-package acme
+package main
 
 import (
 	"strings"
@@ -8,7 +8,7 @@ import (
 	"stackbrew.io/googlecloud"
 )
 
-Api :: {
+AcmeApi :: {
 	hostname: string
 	url: "https://\(hostname)"
 

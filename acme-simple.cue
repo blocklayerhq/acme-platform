@@ -1,11 +1,7 @@
 // Acme: acme clothing application
 package main
 
-import (
-	"acme.infralabs.io/acme"
-)
-
-staging: acme.App & {
+staging: AcmeApp & {
 	// api: hostname: "staging.acme-api.infralabs.io"
 	frontend: {
 		netlifyAccount: {
