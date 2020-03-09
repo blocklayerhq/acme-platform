@@ -3,4 +3,5 @@ variable "region" {
 }
 
 variable "cluster_name" {
+  default = "bl-demo-eks"
 }
