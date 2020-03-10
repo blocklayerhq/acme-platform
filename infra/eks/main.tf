@@ -109,12 +109,13 @@ module "eks" {
    ]
 }
 
-resource "aws_lb" "eks-alb" {
-  name               = "${var.cluster_name}-lb"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.all_worker_mgmt.id]
-  subnets            = module.vpc.public_subnets
+# Using the LB created by traefik
+# resource "aws_lb" "eks-alb" {
+#   name               = "${var.cluster_name}-lb"
+#   internal           = false
+#   load_balancer_type = "application"
+#   security_groups    = [aws_security_group.all_worker_mgmt.id]
+#   subnets            = module.vpc.public_subnets
 
-  enable_deletion_protection = true
-}
+#   enable_deletion_protection = true
+# }
