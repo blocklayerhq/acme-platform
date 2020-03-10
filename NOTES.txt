@@ -48,3 +48,9 @@
 
 	- On merge conflicts, the config wins. Auto-remove overlay values if a config change breaks them
 	- BONUS: detect moves in a change, and optionally auto-move the overlay value
+
+
+- `bl get`
+
+	- Too much internal detail, by default I want to see an output that mirrors my input. Only include public fields
+	- Maybe a flag to show full internals?
