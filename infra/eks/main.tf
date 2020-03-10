@@ -84,10 +84,12 @@ module "vpc" {
 }
 
 module "eks" {
-  source       = "terraform-aws-modules/eks/aws"
-  version      = "9.0.0"
-  cluster_name = var.cluster_name
-  subnets      = module.vpc.private_subnets
+  source  = "terraform-aws-modules/eks/aws"
+  version = "9.0.0"
+
+  cluster_name       = var.cluster_name
+  subnets            = module.vpc.private_subnets
+  config_output_path = "./kube-config/kubeconfig_${var.cluster_name}.secret"
 
   tags = {
     Environment = "bl-demo"
@@ -105,4 +107,14 @@ module "eks" {
       additional_security_group_ids = [aws_security_group.all_worker_mgmt.id]
     }
    ]
+}
+
+resource "aws_lb" "eks-alb" {
+  name               = "${var.cluster_name}-lb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.all_worker_mgmt.id]
+  subnets            = module.vpc.public_subnets
+
+  enable_deletion_protection = true
 }
