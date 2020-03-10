@@ -38,11 +38,6 @@ provider "kubernetes" {
 data "aws_availability_zones" "available" {
 }
 
-resource "random_string" "suffix" {
-  length  = 8
-  special = false
-}
-
 resource "aws_security_group" "all_worker_mgmt" {
   name_prefix = "all_worker_management"
   vpc_id      = module.vpc.vpc_id
@@ -64,7 +59,7 @@ module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "2.6.0"
 
-  name                 = "test-vpc"
+  name                 = "bl-demo"
   cidr                 = "10.0.0.0/16"
   azs                  = data.aws_availability_zones.available.names
   private_subnets      = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
@@ -95,7 +90,7 @@ module "eks" {
   subnets      = module.vpc.private_subnets
 
   tags = {
-    Environment = "test"
+    Environment = "bl-demo"
     GithubRepo  = "terraform-aws-eks"
     GithubOrg   = "terraform-aws-modules"
   }
