@@ -2,24 +2,24 @@ package main
 
 import (
 	"strings"
+	"encoding/json"
+	"text/template"
     "b.l/bl"
 )
 
 AcmeAPI :: {
-	hostname: string
+	hostname: string | *"toto"
 	url: "https://\(hostname)"
 	inputKubeAuth=kubeAuthConfig: bl.Secret
 	inputAWSConfig=awsConfig: {
-		region: "us-west-2",
-		accessKey: bl.Secret,
+		region: "us-west-2"
+		accessKey: bl.Secret
 		secretKey: bl.Secret
 	}
-
-	// Use source code digest as a reliable tag to push to.
-	// This enforces immutability, as long as nobody else overwrites the tag.
-	// FIXME: currently bl.Directory does not expose a `digest` field
-	// safeTag = container.source.digest
-	safeTag = "FIXME"
+	inputDBConfig=dbConfig: {
+		adminUsername: bl.Secret
+		adminPassword: bl.Secret
+	}
 
 	kub: KubernetesApp & {
 		namespace: strings.Replace(hostname, ".", "-", -1)
@@ -29,38 +29,31 @@ AcmeAPI :: {
 		kubeAuthConfig: inputKubeAuth
 		awsConfig: inputAWSConfig
 
-		templateData: {
-			// APIHostname: hostname
-			APIHostname: "FIXME"
-		}
+		kubeConfigYAML: template.Execute(kubeTemplate, {
+			APIHostname: "hostname"
+			ContainerImage: containerImage
+			DBConfig: json.Marshal({
+				production: {
+					username: inputDBConfig.adminUsername
+					password: inputDBConfig.adminPassword
+					database: db.dbName
+					host:     "bl-demo-rds.cluster-cd0qkdyvpxkj.us-west-2.rds.amazonaws.com"
+					dialect:  "mysql"
+					seederStorage: "sequelize"
+				}
+			})
+		})
 	}
 
 	db: RDSAurora & {
+		dbName: strings.Split(hostname, ".")[0]
+		arn: "arn:aws:rds:us-west-2:125635003186:cluster:bl-demo-rds"
+		secretArn: "arn:aws:kms:us-west-2:125635003186:key/a3657780-9e5c-445b-b6f4-d553f3e70118"
 		awsConfig: inputAWSConfig
+		adminAuth: {
+			username: dbConfig.adminUsername
+			password: dbConfig.adminPassword
+		}
 	}
-	// db: {
-	// 	// FIXME: we use Google Cloud SQL, so we should use
-	// 	// the native GCP package for this.
-	// 	mysql.Database & {
-	// 		// Use the API hostname as a default database name
-	// 		name: *hostname | string
-	// 		// Automatically create the database by default
-	// 		create: *true | bool
-	// 	}
 
-	// 	// DB credentials formatted in our app-specific format
-	// 	// Inject this at runtime as a json file in the application container.
-	// 	// Currently we do this with a Kubernetes secret.
-	// 	appConfig: {
-	// 		production: {
-	// 			// FIXME: don't give db admin privileges to the app!
-	// 			username: db.server.adminUser
-	// 			password: db.server.adminPassword
-	// 			database: db.name
-	// 			host: db.server.host
-	// 			dialect: "mysql"
-	// 			seederStorage: "sequelize"
-	// 		}
-	// 	}
-	//}
 }
