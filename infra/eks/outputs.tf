@@ -23,6 +23,11 @@ output "region" {
   value       = var.region
 }
 
+output "db_arn" {
+  description = "DB arn"
+  value       = module.db.this_rds_cluster_arn
+}
+
 output "db_admin_username" {
   description = "Admin db username"
   value       = module.db.this_rds_cluster_master_username
