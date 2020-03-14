@@ -5,3 +5,7 @@ variable "region" {
 variable "cluster_name" {
   default = "bl-demo-eks"
 }
+
+variable "db_name" {
+  default = "bl-demo-rds"
+}
