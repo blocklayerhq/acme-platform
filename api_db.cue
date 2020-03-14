@@ -11,8 +11,8 @@ RDSAurora :: {
     secretArn: string
 
     adminAuth: {
-        username: bl.Secret
-        password: bl.Secret
+        username: string
+        password: string
     }
 
     awsConfig: {
@@ -40,8 +40,12 @@ RDSAurora :: {
 
         os: {
             package: {
-                "aws-cli": true
+                python: true
+                coreutils: true
             }
+            extraCommand: [
+                "apk add --no-cache py-pip && pip install awscli && apk del py-pip"
+            ]
         }
 
         code: #"""
@@ -49,9 +53,11 @@ RDSAurora :: {
             export AWS_ACCESS_KEY_ID="$(cat /aws/access_key)"
             export AWS_SECRET_ACCESS_KEY="$(cat /aws/secret_key)"
 
+            set +e
+
             aws rds-data execute-statement \
                 --resource-arn "$(cat /db/arn)" \
-                --secret-arn "$(cat /db/secret_arn" \
+                --secret-arn "$(cat /db/secret_arn)" \
                 --sql "CREATE DATABASE \`$(cat /db/name)\`" \
                 --no-include-result-metadata \
             |& tee /tmp/out
@@ -61,6 +67,8 @@ RDSAurora :: {
                 grep -q "database exists" /tmp/out
                 [ $? -ne 0 ] && exit $exit_code
             fi
+
+            cp /db/name /db_name
         """#
     }
 

@@ -8,7 +8,7 @@ import (
 )
 
 AcmeAPI :: {
-	hostname: string | *"toto"
+	hostname: string
 	url: "https://\(hostname)"
 	inputKubeAuth=kubeAuthConfig: bl.Secret
 	inputAWSConfig=awsConfig: {
@@ -17,9 +17,22 @@ AcmeAPI :: {
 		secretKey: bl.Secret
 	}
 	inputDBConfig=dbConfig: {
-		adminUsername: bl.Secret
-		adminPassword: bl.Secret
+		// FIXME: should be a bl.Secret
+		adminUsername: string
+		adminPassword: string
+		dbName: strings.Split(hostname, ".")[0]
 	}
+
+	dbConfigJSON: json.Marshal({
+		production: {
+			username: inputDBConfig.adminUsername
+			password: inputDBConfig.adminPassword
+			database: inputDBConfig.dbName
+			host:     "bl-demo-rds.cluster-cd0qkdyvpxkj.us-west-2.rds.amazonaws.com"
+			dialect:  "mysql"
+			seederStorage: "sequelize"
+		}
+	})
 
 	kub: KubernetesApp & {
 		namespace: strings.Replace(hostname, ".", "-", -1)
@@ -30,25 +43,16 @@ AcmeAPI :: {
 		awsConfig: inputAWSConfig
 
 		kubeConfigYAML: template.Execute(kubeTemplate, {
-			APIHostname: "hostname"
+			APIHostname: hostname
 			ContainerImage: containerImage
-			DBConfig: json.Marshal({
-				// production: {
-				// 	username: inputDBConfig.adminUsername
-				// 	password: inputDBConfig.adminPassword
-				// 	database: db.dbName
-				// 	host:     "bl-demo-rds.cluster-cd0qkdyvpxkj.us-west-2.rds.amazonaws.com"
-				// 	dialect:  "mysql"
-				// 	seederStorage: "sequelize"
-				// }
-			})
+			DBConfig: dbConfigJSON
 		})
 	}
 
 	db: RDSAurora & {
-		dbName: strings.Split(hostname, ".")[0]
+		dbName: inputDBConfig.dbName
 		arn: "arn:aws:rds:us-west-2:125635003186:cluster:bl-demo-rds"
-		secretArn: "arn:aws:kms:us-west-2:125635003186:key/a3657780-9e5c-445b-b6f4-d553f3e70118"
+		secretArn: "arn:aws:secretsmanager:us-west-2:125635003186:secret:bl-demo-rds-1-cSl1C4"
 		awsConfig: inputAWSConfig
 		adminAuth: {
 			username: dbConfig.adminUsername
