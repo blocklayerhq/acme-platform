@@ -35,6 +35,9 @@ AcmeAPI :: {
 		}
 	}
 
+	db: RDSAurora & {
+		awsConfig: inputAWSConfig
+	}
 	// db: {
 	// 	// FIXME: we use Google Cloud SQL, so we should use
 	// 	// the native GCP package for this.
