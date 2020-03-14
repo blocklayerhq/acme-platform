@@ -22,3 +22,23 @@ output "region" {
   description = "AWS region."
   value       = var.region
 }
+
+output "db_admin_username" {
+  description = "Admin db username"
+  value       = module.db.this_rds_cluster_master_username
+}
+
+output "db_admin_password" {
+  description = "Admin db password"
+  value       = module.db.this_rds_cluster_master_password
+}
+
+output "db_cluster_endpoint" {
+  description = "DB hostname"
+  value       = module.db.this_rds_cluster_endpoint
+}
+
+output "db_cluster_port" {
+  description = "DB port"
+  value       = module.db.this_rds_cluster_port
+}
