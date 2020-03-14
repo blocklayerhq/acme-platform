@@ -33,14 +33,14 @@ AcmeAPI :: {
 			APIHostname: "hostname"
 			ContainerImage: containerImage
 			DBConfig: json.Marshal({
-				production: {
-					username: inputDBConfig.adminUsername
-					password: inputDBConfig.adminPassword
-					database: db.dbName
-					host:     "bl-demo-rds.cluster-cd0qkdyvpxkj.us-west-2.rds.amazonaws.com"
-					dialect:  "mysql"
-					seederStorage: "sequelize"
-				}
+				// production: {
+				// 	username: inputDBConfig.adminUsername
+				// 	password: inputDBConfig.adminPassword
+				// 	database: db.dbName
+				// 	host:     "bl-demo-rds.cluster-cd0qkdyvpxkj.us-west-2.rds.amazonaws.com"
+				// 	dialect:  "mysql"
+				// 	seederStorage: "sequelize"
+				// }
 			})
 		})
 	}

@@ -14,5 +14,5 @@ bl-runtime run \
     -v staging.api.kubeAuthConfig.value="$kubeconfig" \
     -v staging.api.awsConfig.accessKey.value="$accessKey" \
     -v staging.api.awsConfig.secretKey.value="$secretKey" \
-    -v staging.api.dbConfig.adminUsername="$dbUsername" \
-    -v staging.api.dbConfig.adminPassword="$dbPassword"
+    -v staging.api.dbConfig.adminUsername.value="$dbUsername" \
+    -v staging.api.dbConfig.adminPassword.value="$dbPassword"
