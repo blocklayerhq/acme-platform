@@ -1,7 +1,7 @@
 package main
 
 import (
-	// "b.l/bl"
+	"b.l/bl"
 )
 
 // A single instance of an Acme Clothing application
