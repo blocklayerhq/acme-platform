@@ -8,7 +8,7 @@ import (
 )
 
 AcmeAPI :: {
-	hostname: string
+	hostname: *"" | string
 	url: "https://\(hostname)"
 	inputKubeAuth=kubeAuthConfig: bl.Secret
 	inputAWSConfig=awsConfig: {
@@ -18,21 +18,10 @@ AcmeAPI :: {
 	}
 	inputDBConfig=dbConfig: {
 		// FIXME: should be a bl.Secret
-		adminUsername: string
-		adminPassword: string
+		adminUsername: *"" | string
+		adminPassword: *"" | string
 		dbName: strings.Split(hostname, ".")[0]
 	}
-
-	dbConfigJSON: json.Marshal({
-		production: {
-			username: inputDBConfig.adminUsername
-			password: inputDBConfig.adminPassword
-			database: inputDBConfig.dbName
-			host:     "bl-demo-rds.cluster-cd0qkdyvpxkj.us-west-2.rds.amazonaws.com"
-			dialect:  "mysql"
-			seederStorage: "sequelize"
-		}
-	})
 
 	kub: KubernetesApp & {
 		namespace: strings.Replace(hostname, ".", "-", -1)
@@ -45,7 +34,16 @@ AcmeAPI :: {
 		kubeConfigYAML: template.Execute(kubeTemplate, {
 			APIHostname: hostname
 			ContainerImage: containerImage
-			DBConfig: dbConfigJSON
+			DBConfig: json.Marshal({
+				production: {
+					username: inputDBConfig.adminUsername
+					password: inputDBConfig.adminPassword
+					database: inputDBConfig.dbName
+					host:     "bl-demo-rds.cluster-cd0qkdyvpxkj.us-west-2.rds.amazonaws.com"
+					dialect:  "mysql"
+					seederStorage: "sequelize"
+				}
+			})
 		})
 	}
 

@@ -19,6 +19,8 @@ KubernetesApp :: {
 	}
 
 	deploy: bl.BashScript & {
+    runPolicy: "always"
+
 		input: {
 			"/kube/config.yaml": kubeConfigYAML,
 			"/kube/auth": kubeAuthConfig,
