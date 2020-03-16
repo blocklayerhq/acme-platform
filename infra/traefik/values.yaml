@@ -1,0 +1,6 @@
+dashboard:
+  enabled: false
+additionalArguments:
+  - --certificatesResolvers.acmeresolver.acme.email=hello+aws@blocklayerhq.com
+  - --certificatesResolvers.acmeresolver.acme.storage=acmeresolver.json
+  - --certificatesResolvers.acmeresolver.acme.tlsChallenge=true
