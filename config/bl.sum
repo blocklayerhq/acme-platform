@@ -1,9 +1,9 @@
 {
   "b.l/bl": "sha256:b13d48bc95fbe4aa5d06f6ffdc402be91b39f21aad3c118726b0838ba2016d8d",
-  "stackbrew.io/googlecloud": "sha256:0bf379ffd42e3cbdc5fa404c6dca691d844f82ebb840107a5f510b9e70768781",
-  "stackbrew.io/kubernetes": "sha256:1b06d9fd434f2207e2b18cacfc29aea3fb2b2e652513b423d07a5a35150873c2",
-  "stackbrew.io/mysql": "sha256:d3a97c09bd36c255f7b9271fb8af6122ddf1e6fb45038e8091c4757cce00c379",
-  "stackbrew.io/netlify": "sha256:011e6874a105a0f66d97430a3578c298b17484e4e54fae0f3736f3e13ba4f94d",
-  "stackbrew.io/nodejs": "sha256:fe5d067d733884d1725bc8c29b23e5e94f48ff6dc043a8e146e0ae1c1147dce3",
-  "stackbrew.io/yarn": "sha256:1408a665e533b8e17c62db8e4de432d2f1d4117b3a5c85559fb841da6a4d0b7f"
+  "stackbrew.io/googlecloud": "sha256:c83ff8211924dd7c394f4bc47b76f2081fabaa231ce4e183ea86b09138d3e2c0",
+  "stackbrew.io/kubernetes": "sha256:d1143dd441e43e3958dcce40c76b7b72fca6be45e980d61eed861dbd45a2461c",
+  "stackbrew.io/mysql": "sha256:92065d6a534468625586055de3c26f6ca565b6afc384ad70b4506facdf8bf1ed",
+  "stackbrew.io/netlify": "sha256:d680bc3e97770e6a2c8743b3b342cc36ac3c3e7791c03fea799ddd72c3c180c8",
+  "stackbrew.io/nodejs": "sha256:e3814bbcb5b5841ae18b053b0e647dd940fd7dddeeab31dea1754b62563285d6",
+  "stackbrew.io/yarn": "sha256:f37062775b56b62b0c3e7f7a1e220567feb9a934a31bb860bfb82fd3ed18d5c8"
 }

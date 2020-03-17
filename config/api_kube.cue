@@ -19,7 +19,7 @@ KubernetesApp :: {
 	}
 
 	deploy: bl.BashScript & {
-    runPolicy: "always"
+    	runPolicy: "always"
 
 		input: {
 			"/kube/config.yaml": kubeConfigYAML,
