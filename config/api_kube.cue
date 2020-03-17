@@ -49,9 +49,6 @@ KubernetesApp :: {
 			export KUBECONFIG=/kube/auth
 
 			namespace="$(cat /kube/namespace)"
-
-			kubectl get po --all-namespaces
-
 			kubectl create namespace "$namespace" || true
 			kubectl --namespace "$namespace" apply -f /kube/config.yaml
 

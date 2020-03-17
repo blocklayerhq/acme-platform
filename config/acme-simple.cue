@@ -10,5 +10,6 @@ staging: AcmeApp & {
 		}
 		site: name: "acme-demo"
 		hostname: "staging.acme.infralabs.io"
+		apiHostname: api.hostname
 	}
 }

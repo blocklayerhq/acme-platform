@@ -7,6 +7,7 @@ import (
 
 AcmeFrontend :: {
 	hostname: string
+	apiHostname: string
 	url: "https://\(hostname)"
 
 	app: yarn.App & {
@@ -14,7 +15,8 @@ AcmeFrontend :: {
 		loadEnv:      false
 		environment: {
 			NODE_ENV: "production"
-			APP_URL:  "https://\(hostname)"
+			APP_URL: "https://\(hostname)"
+			APP_URL_API: "https://\(apiHostname)"
 		}
 		buildDirectory: "public"
 		yarnScript: "build:client"
