@@ -46,9 +46,12 @@ KubernetesApp :: {
 			export AWS_DEFAULT_REGION="$(cat /aws/region)"
 			export AWS_ACCESS_KEY_ID="$(cat /aws/access_key)"
 			export AWS_SECRET_ACCESS_KEY="$(cat /aws/secret_key)"
+			export KUBECONFIG=/kube/auth
+
 			namespace="$(cat /kube/namespace)"
 
-			export KUBECONFIG=/kube/auth
+			kubectl get po --all-namespaces
+
 			kubectl create namespace "$namespace" || true
 			kubectl --namespace "$namespace" apply -f /kube/config.yaml
 
