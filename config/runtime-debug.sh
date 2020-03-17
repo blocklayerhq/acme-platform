@@ -11,8 +11,10 @@ accessKey=$(echo "$AWS_ACCESS_KEY_ID" | base64)
 secretKey=$(echo "$AWS_SECRET_ACCESS_KEY" | base64)
 dbUsername="$DB_USERNAME"
 dbPassword="$DB_PASSWORD"
+netlifyToken="$(echo -n "$NETLIFY_TOKEN" | base64)"
 
 bl-runtime run \
+    -v staging.frontend.netlifyAccount.token.value="$netlifyToken" \
     -v staging.api.kubeAuthConfig.value="$kubeconfig" \
     -v staging.api.awsConfig.accessKey.value="$accessKey" \
     -v staging.api.awsConfig.secretKey.value="$secretKey" \
