@@ -22,12 +22,9 @@ AcmeFrontend :: {
 		yarnScript: "build:client"
 	}
 
-	netlifyAccount: netlify.Account
-
-	// FIXME: we should set this site name but triggers an error
-	// netlifyAccount: netlify.Account & {
-	// 	name: "blocklayer"
-	// }
+	netlifyAccount: netlify.Account & {
+		name: "blocklayer"
+	}
 
     // Netlify site hosting the webapp
 	site: netlify.Site & {
