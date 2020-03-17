@@ -107,6 +107,8 @@ module "eks" {
       additional_security_group_ids = [aws_security_group.all_worker_mgmt.id]
     }
    ]
+
+  map_users = var.map_users
 }
 
 # Using the LB created by traefik
