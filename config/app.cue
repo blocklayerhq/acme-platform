@@ -11,10 +11,7 @@ AcmeApp :: {
 
 	url: frontend.url
 
-	// FIXME: API temporarily disabled until frontend is solid on alpha-3
-	// api: AcmeApi & {
-	// 	container: source: bl.Directory & { from: monorepo, path: "crate/code/api" }
-	// }
+	api: AcmeAPI
 
 	frontend: AcmeFrontend & {
 		app: source: bl.Directory & { from: monorepo, path: "crate/code/web" }

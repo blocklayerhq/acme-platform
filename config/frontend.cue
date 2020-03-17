@@ -7,6 +7,7 @@ import (
 
 AcmeFrontend :: {
 	hostname: string
+	apiHostname: string
 	url: "https://\(hostname)"
 
 	app: yarn.App & {
@@ -14,13 +15,16 @@ AcmeFrontend :: {
 		loadEnv:      false
 		environment: {
 			NODE_ENV: "production"
-			APP_URL:  "https://\(hostname)"
+			APP_URL: "https://\(hostname)"
+			APP_URL_API: "https://\(apiHostname)"
 		}
 		buildDirectory: "public"
 		yarnScript: "build:client"
 	}
 
-	netlifyAccount: netlify.Account
+	netlifyAccount: netlify.Account & {
+		name: "blocklayer"
+	}
 
     // Netlify site hosting the webapp
 	site: netlify.Site & {
@@ -30,4 +34,3 @@ AcmeFrontend :: {
 		domain: hostname
 	}
 }
-
