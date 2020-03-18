@@ -56,8 +56,8 @@ RDSAurora :: {
             set +e
 
             aws rds-data execute-statement \
-                --cli-connect-timeout 30 \
-                --cli-read-timeout 30 \
+                --cli-connect-timeout 60 \
+                --cli-read-timeout 60 \
                 --resource-arn "$(cat /db/arn)" \
                 --secret-arn "$(cat /db/secret_arn)" \
                 --sql "CREATE DATABASE \`$(cat /db/name)\`" \
