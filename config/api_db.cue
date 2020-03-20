@@ -1,9 +1,5 @@
 package main
 
-import (
-    "b.l/bl"
-)
-
 RDSAurora :: {
 
     dbName: string
@@ -11,18 +7,18 @@ RDSAurora :: {
     secretArn: string
 
     adminAuth: {
-        username: string
-        password: string
+        username: secret
+        password: secret
     }
 
     awsConfig: {
 		region: string
-		accessKey: bl.Secret
-		secretKey: bl.Secret
+		accessKey: secret
+		secretKey: secret
 	}
 
     // FIXME: add support for create new user/pwd
-    create_db: bl.BashScript & {
+    create_db: task & {
         input: {
         	"/aws/region": awsConfig.region
 			"/aws/access_key": awsConfig.accessKey

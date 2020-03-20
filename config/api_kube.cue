@@ -1,9 +1,5 @@
 package main
 
-import (
-		"b.l/bl"
-)
-
 KubernetesApp :: {
 	// FIXME: it would be nicer to manipulate config files in Cue directly
 	//kubeConfigFiles: [yaml.Unmarshal(d) for d in strings.Split(kubeTemplate, "---")]
@@ -11,14 +7,14 @@ KubernetesApp :: {
 	kubeConfigYAML: string
 	namespace: string
 	containerImage: string
-	kubeAuthConfig: bl.Secret
+	kubeAuthConfig: secret
 	awsConfig: {
 		region: string,
-		accessKey: bl.Secret,
-		secretKey: bl.Secret,
+		accessKey: secret,
+		secretKey: secret,
 	}
 
-	deploy: bl.BashScript & {
+	deploy: task & {
     	runPolicy: "always"
 
 		input: {

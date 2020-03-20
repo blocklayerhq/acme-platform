@@ -4,22 +4,21 @@ import (
 	"strings"
 	"encoding/json"
 	"text/template"
-    "b.l/bl"
 )
 
 AcmeAPI :: {
 	hostname: *"" | string
 	url: "https://\(hostname)"
-	inputKubeAuth=kubeAuthConfig: bl.Secret
+	inputKubeAuth=kubeAuthConfig: secret
 	inputAWSConfig=awsConfig: {
 		region: "us-west-2"
-		accessKey: bl.Secret
-		secretKey: bl.Secret
+		accessKey: secret
+		secretKey: secret
 	}
 	inputDBConfig=dbConfig: {
 		// FIXME: should be a bl.Secret
-		adminUsername: *"" | string
-		adminPassword: *"" | string
+		adminUsername: secret
+		adminPassword: secret
 		dbName: strings.Split(hostname, ".")[0]
 	}
 

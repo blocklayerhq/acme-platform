@@ -1,5 +1,6 @@
 {
   "b.l/bl": "sha256:d057039666bc3c7f3adad29ba03fc9848c8369a91d4324ce275b704b27658965",
+  "stackbrew.io/github": "sha256:2f888901ba5ac595398794d7433cd21e40bcdade8717231a0bd7d534beb07688",
   "stackbrew.io/googlecloud": "sha256:46acb05165dac4a3de40b63b12c38b4376560fb0731ffe8d49b786ae9f5db7a5",
   "stackbrew.io/kubernetes": "sha256:7606d6c138c374429a5e9cbc94b857ec608b79d76f11810ed02edb98e17d7c42",
   "stackbrew.io/mysql": "sha256:dd9dc28443f93a5d8e103911d04bb87eb65925777b387cccb942c98a53422b1e",
