@@ -37,33 +37,13 @@ env: devtools: {
 
 // Dynamically create an environment for each PR
 for prID, pr in env.devtools.config.monorepo.pr {
+	domain=env.devtools.input.devDomain
+	apiDomain=env.devtools.input.devApiDomain
 
-	env: "pr-\(prID)": {
-
-		config: {
-			domain: env.devtools.input.devDomain
-			apiDomain: env.devtools.input.devApiDomain
-
-			api: AcmeAPI & {
-				hostname: "pr-\(prID).\(apiDomain)"
-			}
-			frontend: AcmeFrontend & {
-				hostname: "pr-\(prID).\(domain)"
-				apiHostname: api.hostname
-				site: name: "acme-pr-\(prID)"
-				app: source: directory & {
-					from: pr.branch.tip.checkout
-				}
-			}
-		}
-
-		output: {
-
-			// Frontend URL
-			url: config.frontend.url
-
-			// API URL
-			apiUrl: config.api.url
-		}
+	env: "pr-\(prID)": AcmeEnv & {
+		hostname: "pr-\(prID).\(domain)"
+		apiHostname: "pr-\(prID).\(apiDomain)"
+		netlifySite: "acme-pr-\(prID)"
+		monorepo: pr.branch.tip.checkout
 	}
 }
