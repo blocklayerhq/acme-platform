@@ -1,5 +1,6 @@
 package main
 
-// view: staging: envView & {
-//  	envName: "staging"
-//}
+view: staging: {
+	envView
+	envName: "staging"
+}

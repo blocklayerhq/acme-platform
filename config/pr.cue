@@ -1,49 +1,26 @@
 package main
 
-import (
-	"stackbrew.io/github"
-)
+// Environment to deploy a full review environment for each pull request on the monorepo,
+// then post its URL as a comment on the pull request.
 
+env: prReview: {
 
-// Integrate with Github to get PR information
-env: devtools: {
-
-	input: {
-		// Github API token
-		githubToken: secret
-
-		// Owner of the github repo
-		githubRepoOwner: string | *"blocklayerhq"
-
-		// Name of the github repo
-		githubRepoName: string | *"acme-clothing"
-
-		// Top-level domain for all web endpoints
-		devDomain: string | *"dev.acme.infralabs.io"
-
-		// Top-level domain for all api endpoints
-		devApiDomain: string | *"dev.acme-api.infralabs.io"
-	}
-
-	config: {
-		monorepo: github.Repository & {
-			token: input.githubToken
-			owner: input.githubRepoOwner
-			name: input.githubRepoName
+	output: {
+		for prID, d in block.deployment {
+			"PR \(prID) web": d.webUrl
+			"PR \(prID) API": d.apiUrl
 		}
 	}
-}
 
-
-// Dynamically create an environment for each PR
-for prID, pr in env.devtools.config.monorepo.pr {
-	domain=env.devtools.input.devDomain
-	apiDomain=env.devtools.input.devApiDomain
-
-	env: "pr-\(prID)": AcmeEnv & {
-		hostname: "pr-\(prID).\(domain)"
-		apiHostname: "pr-\(prID).\(apiDomain)"
-		netlifySite: "acme-pr-\(prID)"
-		monorepo: pr.branch.tip.checkout
+	block: {
+		// Deploy a complete dev stack from each pull request,
+		// for review and integration testing.
+		for prID, pr in env.devInfra.block.monorepo.pr {
+			"\(prID)": env.devInfra.Deployment & {
+				name:   "pr\(prID)"
+				source: pr.branch.tip.checkout
+			}
+		}
 	}
+	// FIXME: post a comment on the pull request
 }
