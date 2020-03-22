@@ -1,6 +1,6 @@
 package main
 
-kubeTemplate: """
+AcmeAPI:: kub: config: source: """
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
