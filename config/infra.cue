@@ -82,9 +82,9 @@ env: devInfra: {
 
 	block: {
 		monorepo: github.Repository & {
-			token: devInfra.githubToken
-			owner: devInfra.githubRepoOwner
-			name:  devInfra.githubRepoName
+			token: input.githubToken
+			owner: input.githubRepoOwner
+			name:  input.githubRepoName
 		}
 
 		// FIXME: automate infrastructure provisioning
