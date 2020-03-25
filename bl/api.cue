@@ -54,9 +54,9 @@ AcmeAPI :: {
 			baseConfig.resource
 			// FIXME: lists are a pain to merge
 			ingressroute: ingressroutetls: spec: {
-				routeBase=routes[0]
-				routeOverlay={match: "Host(`\(hostname)`)"}
-				routes: [routes[0] & routeOverlay]
+				// routeBase=routes[0]
+				// routeOverlay={match: "Host(`\(hostname)`)"}
+				// routes: [routes[0] & routeOverlay]
 			}
 		}
 
