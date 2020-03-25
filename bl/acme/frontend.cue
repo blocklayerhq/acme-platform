@@ -1,4 +1,4 @@
-package main
+package acme
 
 import (
 	"strings"
@@ -7,7 +7,8 @@ import (
 	"stackbrew.io/netlify"
 )
 
-AcmeFrontend :: {
+// Web frontend of an ACME clothing app
+Frontend :: {
 	// Hostname of the frontend
 	hostname: string
 

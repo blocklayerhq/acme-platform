@@ -2,6 +2,8 @@ package main
 
 import (
 	"stackbrew.io/github"
+
+	"acme.infralabs.io/acme"
 )
 
 // Environment to manage all development infrastructure
@@ -102,7 +104,7 @@ env: devInfra: {
 
 	// A full deployment of the ACME stack on the dev infra
 	// This can be used from other environments
-	Deployment :: AcmeApp & {
+	Deployment :: acme.App & {
 		// If name is set, use it to auto-generate hostnames
 		name: string
 

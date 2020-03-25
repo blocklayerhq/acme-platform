@@ -1,12 +1,12 @@
-package main
+package acme
 
 // Configuration template for a complete ACME environment
-AcmeApp :: {
+App :: {
 	name:             string | *""
 	appSource=source: directory
 
-	api: AcmeAPI
-	web: AcmeFrontend & {
+	api: API
+	web: Frontend & {
 		apiHostname: api.hostname
 		source:      directory & {
 			from: appSource

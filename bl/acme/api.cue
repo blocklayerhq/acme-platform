@@ -1,4 +1,4 @@
-package main
+package acme
 
 import (
 	"strings"
@@ -8,7 +8,7 @@ import (
 	"acme.infralabs.io/aws/aurora"
 )
 
-AcmeAPI :: {
+API :: {
 	hostname: string
 	url:      "https://\(hostname)"
 
