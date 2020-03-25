@@ -1,6 +1,7 @@
 package acme
 
 import (
+	"encoding/json"
 	"strings"
 
 	"acme.infralabs.io/kubernetes"
@@ -11,6 +12,9 @@ import (
 API :: {
 	hostname: string
 	url:      "https://\(hostname)"
+
+	// FIXME: parametrize the container image
+	containerImage: "samalba/crate-api-tmp"
 
 	// AWS configuration shared by EKS and Aurora
 	aws: {
@@ -57,11 +61,22 @@ API :: {
 
 		config: kubernetes.Config & {
 			baseConfigFile.resource
-			// FIXME: lists are a pain to merge
 			ingressroute: ingressroutetls: spec: {
-				routeBase=routes[0]
-				routeOverlay={match: "Host(`\(hostname)`)"}
-				routes: [routeBase & routeOverlay]
+				routes: [routes[0] & {
+					match: "Host(`\(hostname)`)"
+				}]
+			}
+			deployment: "acme-clothing-api": spec: template: spec: {
+				containers: [containers[0] & {
+					image: containerImage
+				}]
+				initContainers: [initContainers[0] & {
+					image: containerImage
+				}]
+			}
+			secret: "api-db-config": {
+				secretData=json.Marshal(js.config)
+				stringData: json: secretData
 			}
 		}
 
