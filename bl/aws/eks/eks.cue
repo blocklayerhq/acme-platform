@@ -1,12 +1,17 @@
-package main
+package eks
 
 import (
 	"encoding/yaml"
 
 	"acme.infralabs.io/kubernetes"
+	"b.l/bl"
 )
 
-EKSDeployment :: {
+secret :: bl.Secret
+task :: bl.BashScript
+
+// Deployment of a kubernetes configuration on an AWS EKS cluster
+Deployment :: {
 	// FIXME: it would be nicer to manipulate config files in Cue directly
 	//kubeConfigFiles: [yaml.Unmarshal(d) for d in strings.Split(kubeTemplate, "---")]
 

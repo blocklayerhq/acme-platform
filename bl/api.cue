@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"acme.infralabs.io/kubernetes"
+	"acme.infralabs.io/aws/eks"
+	"acme.infralabs.io/aws/aurora"
 )
 
 AcmeAPI :: {
@@ -34,7 +36,7 @@ AcmeAPI :: {
 
 	// API is backed by a MySQL database on an AWS Aurora server.
 	// The server is provisioned out-of-band.
-	db: AuroraDB & {
+	db: aurora.DB & {
 		// Database name
 		// (a DB is created automatically on the server for each deployment)
 		name: strings.Split(hostname, ".")[0]
@@ -64,7 +66,7 @@ AcmeAPI :: {
 		}
 
 		// Deploy the configuration on EKS cluster
-		deployment: EKSDeployment & {
+		deployment: eks.Deployment & {
 			online: false
 			namespace:      strings.Replace(hostname, ".", "-", -1)
 			// FIXME: for now we only pass the raw yaml string without values inserted

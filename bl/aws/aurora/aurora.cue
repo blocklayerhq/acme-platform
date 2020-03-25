@@ -1,6 +1,14 @@
-package main
+package aurora
 
-AuroraDB :: {
+import (
+	"b.l/bl"
+)
+
+secret :: bl.Secret
+task :: bl.BashScript
+
+// A database on an AWS Aurora SQL server
+DB :: {
 
 	name:      string
 	arn:       string
