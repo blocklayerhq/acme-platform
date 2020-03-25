@@ -82,7 +82,7 @@ env: devInfra: {
 		// }
 	}
 
-	block: {
+	config: {
 		monorepo: github.Repository & {
 			// token: input.githubToken
 			// FIXME
@@ -108,7 +108,7 @@ env: devInfra: {
 
 		// Monorepo checkout to deploy
 		// By default, deploy from master on the upstream monorepo
-		source: directory | *block.monorepo.master.tip.checkout
+		source: directory | *config.monorepo.master.tip.checkout
 
 		web: {
 			hostname: string | *"\(name).\(input.webDomain)"

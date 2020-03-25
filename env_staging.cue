@@ -9,11 +9,11 @@ env: staging: {
 	}
 
 	output: {
-		"Staging URL":     block.deploy.web.url
-		"Staging API URL": block.deploy.api.url
+		"Staging URL":     config.deploy.web.url
+		"Staging API URL": config.deploy.api.url
 	}
 
-	block: deploy: env.devInfra.Deployment & {
+	config: deploy: env.devInfra.Deployment & {
 		source: input.source
 		web: hostname: "staging.acme.infralabs.io"
 		api: hostname: "staging.acme-api.infralabs.io"
