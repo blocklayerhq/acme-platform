@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-directory: bl.Directory
+directory :: bl.Directory
 
 secret :: bl.Secret & {value: string | *""}
 task ::   bl.BashScript

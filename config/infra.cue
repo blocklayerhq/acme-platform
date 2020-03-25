@@ -35,7 +35,7 @@ env: devInfra: {
 		netlifyToken: secret
 
 		// Netlify team name
-		netlifyTeam: string
+		netlifyTeam: string | *"blocklayer"
 
 		/////////////////
 		// API DEPLOYMENT INFRA
@@ -66,7 +66,8 @@ env: devInfra: {
 		/////////////////
 
 		// Github API token
-		githubToken: secret
+		// FIXME
+		// githubToken: secret
 
 		// Owner of the github repo
 		githubRepoOwner: string | *"blocklayerhq"
@@ -75,14 +76,17 @@ env: devInfra: {
 		githubRepoName: string | *"acme-clothing"
 
 		// Queue of inbound github events
-		githubEvents: queue & {
-			receive: github.Event
-		}
+		// FIXME: not yet implemented in the github package
+		// githubEvents: queue & {
+		//	receive: github.Event
+		// }
 	}
 
 	block: {
 		monorepo: github.Repository & {
-			token: input.githubToken
+			// token: input.githubToken
+			// FIXME
+			token: secret & { value: "FIXME" }
 			owner: input.githubRepoOwner
 			name:  input.githubRepoName
 		}
@@ -90,6 +94,10 @@ env: devInfra: {
 		// FIXME: automate infrastructure provisioning
 		// Currently it is done out-of-band (terraform for API,
 		// manually for frontend).
+
+		test: {
+			region: input.awsRegion
+		}
 	}
 
 	// A full deployment of the ACME stack on the dev infra
@@ -111,19 +119,15 @@ env: devInfra: {
 		}
 		api: {
 			hostname: string | *"\(name).\(input.apiDomain)"
-			kub: {
-				auth: input.kubeAuth
+			aws: {
+				region:    input.awsRegion
+				accessKey: input.awsAccessKey
+				secretKey: input.awsSecretKey
 			}
-			db: {
-				awsConfig: {
-					region:    input.awsRegion
-					accessKey: input.awsAccessKey
-					secretKey: input.awsSecretKey
-				}
-				adminAuth: {
-					username: input.dbAdminUser
-					password: input.dbAdminPassword
-				}
+			kub: auth: input.kubeAuth
+			db: adminAuth: {
+				username: input.dbAdminUser
+				password: input.dbAdminPassword
 			}
 		}
 	}

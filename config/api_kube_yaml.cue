@@ -1,6 +1,6 @@
 package main
 
-AcmeAPI:: kub: config: source: """
+AcmeAPI :: kub: baseConfig: contents: """
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
@@ -9,8 +9,7 @@ spec:
     entryPoints:
       - websecure
     routes:
-    - match: Host(`{{ .APIHostname }}`)
-      kind: Rule
+    - kind: Rule
       services:
       - name: acme-clothing-api
         port: 8000
@@ -36,8 +35,7 @@ spec:
                  - key: json
                    path: json
             containers:
-              - image: {{ .ContainerImage }}
-                name: api
+              - name: api
                 command: ["npm", "run", "start:server"]
                 volumeMounts:
                   - name: api-db-config
@@ -52,7 +50,6 @@ spec:
                 env:
             initContainers:
               - name: db-setup
-                image: {{ .ContainerImage }}
                 command: ["npm", "run", "setup:db"]
                 env:
                 volumeMounts:
@@ -81,8 +78,6 @@ kind: Secret
 metadata:
     name: api-db-config
 type: Opaque
-stringData:
-    json: '
-        {{ .DBConfig }}
-    '
 """
+
+
