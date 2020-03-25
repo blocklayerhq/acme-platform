@@ -2,6 +2,8 @@ package main
 
 import (
 	"strings"
+
+	"acme.infralabs.io/kubernetes"
 )
 
 AcmeAPI :: {
@@ -49,14 +51,15 @@ AcmeAPI :: {
 
 		// Base config parsed from raw yaml file.
 		// NOTE: raw yaml is inlined in api_kube_yaml.cue, until we support dynamic yaml loading
-		baseConfig: KubeYAMLFile
-		config: {
-			baseConfig.resource
+		baseConfigFile: kubernetes.ConfigFile
+
+		config: kubernetes.Config & {
+			baseConfigFile.resource
 			// FIXME: lists are a pain to merge
 			ingressroute: ingressroutetls: spec: {
-				// routeBase=routes[0]
-				// routeOverlay={match: "Host(`\(hostname)`)"}
-				// routes: [routes[0] & routeOverlay]
+				routeBase=routes[0]
+				routeOverlay={match: "Host(`\(hostname)`)"}
+				routes: [routeBase & routeOverlay]
 			}
 		}
 

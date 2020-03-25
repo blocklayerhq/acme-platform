@@ -2,13 +2,15 @@ package main
 
 import (
 	"encoding/yaml"
+
+	"acme.infralabs.io/kubernetes"
 )
 
 EKSDeployment :: {
 	// FIXME: it would be nicer to manipulate config files in Cue directly
 	//kubeConfigFiles: [yaml.Unmarshal(d) for d in strings.Split(kubeTemplate, "---")]
 
-	kubeConfig: KubeConfig
+	kubeConfig: kubernetes.Config
 	kubeConfigYAML: yaml.Marshal(kubeConfig)
 	namespace:      string
 	kubeAuthConfig: secret

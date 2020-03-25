@@ -1,6 +1,6 @@
 package main
 
-AcmeAPI :: kub: baseConfig: contents: """
+AcmeAPI :: kub: baseConfigFile: contents: """
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
