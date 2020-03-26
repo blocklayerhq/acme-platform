@@ -19,6 +19,9 @@ env: devInfra: {
 
 	input: {
 
+		// Master switch to enable/disable deployment tasks
+		online: *"1" | "0"
+
 		/////////////////
 		// DNS SETTINGS
 		////////////////
@@ -118,6 +121,7 @@ env: devInfra: {
 				name:  input.netlifyTeam
 				token: input.netlifyToken
 			}
+			site: online: (input.online == "1")
 		}
 		api: {
 			hostname: string | *"\(name).\(input.apiDomain)"
@@ -127,6 +131,7 @@ env: devInfra: {
 				secretKey: input.awsSecretKey
 			}
 			kub: auth: input.kubeAuth
+			kub: deployment: online: (input.online == "1")
 			db: adminAuth: {
 				username: input.dbAdminUser
 				password: input.dbAdminPassword

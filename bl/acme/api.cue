@@ -86,7 +86,6 @@ API :: {
 
 		// Deploy the configuration on EKS cluster
 		deployment: eks.Deployment & {
-			online: false
 			namespace:      strings.Replace(hostname, ".", "-", -1)
 			// FIXME: for now we only pass the raw yaml string without values inserted
 			kubeConfig: config
