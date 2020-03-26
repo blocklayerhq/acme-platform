@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"stackbrew.io/yarn"
-	"stackbrew.io/netlify"
+	"acme.infralabs.io/netlify"
 )
 
 // Web frontend of an ACME clothing app
