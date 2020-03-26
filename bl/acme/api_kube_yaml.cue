@@ -1,6 +1,7 @@
 package acme
 
-API :: kub: baseConfigFile: contents: """
+// FIXME: we are mocking an attachment API that does not exist
+attachment: "api_kube.yaml": contents: """
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:

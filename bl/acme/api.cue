@@ -55,17 +55,20 @@ API :: {
 		// Kubernetes auth configuration (from kubectl config)
 		auth: secret
 
-		// Base config parsed from raw yaml file.
-		// NOTE: raw yaml is inlined in api_kube_yaml.cue, until we support dynamic yaml loading
-		baseConfigFile: kubernetes.ConfigFile
+		// Full kubernetes config
+		config: {
+			// 1. Load base config from attached yaml file
+			(kubernetes.LoadYaml & {
+				input: attachment["api_kube.yaml"].contents
+			}).output
 
-		config: kubernetes.Config & {
-			baseConfigFile.resource
+			// 2. Ingress overlay
 			ingressroute: ingressroutetls: spec: {
 				routes: [routes[0] & {
 					match: "Host(`\(hostname)`)"
 				}]
 			}
+			// 3. Image name overlay (container and initContainer)
 			deployment: "acme-clothing-api": spec: template: spec: {
 				containers: [containers[0] & {
 					image: containerImage
@@ -74,6 +77,7 @@ API :: {
 					image: containerImage
 				}]
 			}
+			// 4. Secret overlay (with db config for js app)
 			secret: "api-db-config": {
 				secretData=json.Marshal(js.config)
 				stringData: json: secretData

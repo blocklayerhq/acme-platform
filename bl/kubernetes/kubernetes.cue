@@ -5,23 +5,16 @@ import (
 	"encoding/yaml"
 )
 
-ConfigFile :: {
-	YAMLFile
-	YAMLConfig
-
-	contents: string
-}
-
+// A kubernetes configuration, in a cue-optimized schema
+// (easy to query and modify).
 Config :: [kind=string]: [id=string]: _
 
-// FIXME: rename to parseYAMLConfig,
-// use like a function, expose resource
-YAMLConfig :: {
-	// List of parts parsed from yaml
-	parts: [..._]
-
-	resource: Config & {
-		for _, p in parts {
+// Load a configuration from the standard Kubernetes format.
+// Input parts are typically unmarshalled from json or yaml.
+Load :: {
+	input: [..._]
+	output: Config & {
+		for _, p in input {
 			if (p.metadata.name & string) != _|_ & (p.kind & string) != _|_  {
 				"\(strings.ToLower(p.kind))": "\(p.metadata.name)": p
 			}
@@ -31,19 +24,30 @@ YAMLConfig :: {
 	}
 }
 
-// A directory of yaml files.
-// FIXME: for now, yaml contents must be inlined here statically.
-// FIXME: later, implement dynamic loading so that yaml config can be upoloaded as input.
-YAMLDirectory :: {
-	// Raw YAML files, organized by path
-	file: [path=string]: string
-	parts: [yaml.Unmarshal(contents) for _, contents in file]
+// Save a configuration to the standard Kubernetes format.
+// The output can then be marshalled to json or yaml.
+Save :: {
+	input: Config
+	output: [..._]
+
+	// FIXME
 }
 
-YAMLFile :: {
-	contents: string
+LoadYaml :: {
+	rawYaml=input: string
+	output: Config
 
-	// FIXME: this is a stopgap until yaml.Unmarshal supports multi-part
-	rawParts: strings.Split(contents, "---\n")
-	parts: [yaml.Unmarshal(rawPart) for rawPart in rawParts]
+	output: (Load & {
+		// FIXME: this is a stopgap until yaml.Unmarshal supports multi-part
+		input: [yaml.Unmarshal(rawPart) for rawPart in strings.Split(rawYaml, "---\n")]
+	}).output
+}
+
+LoadYamlDirectory :: {
+	files=input: [path=string]: string
+	output: Config
+
+	output: (Load & {
+		input: [yaml.Unmarshal(contents) for _, contents in files]
+	}).output
 }
