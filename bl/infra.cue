@@ -82,7 +82,7 @@ env: devInfra: {
 
 		// Queue of inbound github events
 		// FIXME: not yet implemented in the github package
-		// githubEvents: queue & {
+		// githubEvents: stream & {
 		//	receive: github.Event
 		// }
 	}
