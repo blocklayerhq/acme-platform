@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"list"
 	"strings"
 	"encoding/yaml"
 )
@@ -30,8 +31,15 @@ Save :: {
 	input: Config
 	output: [..._]
 
-	// FIXME
+	output: list.FlattenN([
+		[
+			resource
+			for name, resource in resourceGroup
+		]
+		for kind, resourceGroup in input
+	], 1)
 }
+
 
 LoadYaml :: {
 	rawYaml=input: string
@@ -41,6 +49,19 @@ LoadYaml :: {
 		// FIXME: this is a stopgap until yaml.Unmarshal supports multi-part
 		input: [yaml.Unmarshal(rawPart) for rawPart in strings.Split(rawYaml, "---\n")]
 	}).output
+}
+
+SaveYaml :: {
+	config=input: Config
+	output: string
+
+	outputParts: (Save & {
+		input: config
+	}).output
+
+	outputYamlParts: [yaml.Marshal(part) for part in outputParts]
+
+	output: strings.Join(outputYamlParts, "---\n")
 }
 
 LoadYamlDirectory :: {

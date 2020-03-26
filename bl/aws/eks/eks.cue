@@ -16,8 +16,9 @@ Deployment :: {
 	//kubeConfigFiles: [yaml.Unmarshal(d) for d in strings.Split(kubeTemplate, "---")]
 
 	kubeConfig: kubernetes.Config
-	// FIXME: this produces an invalid kubernetes yaml (maps instead of arrays)
-	kubeConfigYAML: yaml.Marshal(kubeConfig)
+	kubeConfigYAML: (kubernetes.SaveYaml & {
+		input: kubeConfig
+	}).output
 	namespace:      string
 	kubeAuthConfig: secret
 	awsConfig: {
