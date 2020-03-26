@@ -83,7 +83,7 @@ env: devInfra: {
 		// Queue of inbound github events
 		// FIXME: not yet implemented in the github package
 		// githubEvents: stream & {
-		//	receive: github.Event
+		// receive: github.Event
 		// }
 	}
 
@@ -91,7 +91,7 @@ env: devInfra: {
 		monorepo: github.Repository & {
 			// token: input.githubToken
 			// FIXME
-			token: secret & { value: "FIXME" }
+			token: secret & {value: "FIXME"}
 			owner: input.githubRepoOwner
 			name:  input.githubRepoName
 		}

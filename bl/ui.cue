@@ -6,7 +6,7 @@ import (
 
 View :: {
 	name: string
-	e=env[name]
+	e = env[name]
 
 	inputs: kvtable & {
 		kind: "input"
@@ -72,7 +72,7 @@ kvtable :: {
 	}
 
 	markdown: t.markdown
-	html: t.html
+	html:     t.html
 }
 
 table :: {
@@ -87,18 +87,18 @@ table :: {
 		"""
 
 	htmlHeaderRow:
-		"""
+			"""
 		<th>
-		\(strings.Join(["	<td>\(cell)</td>" for cell in headerRow], "\n"))
+		\(strings.Join([ "	<td>\(cell)</td>" for cell in headerRow ], "\n"))
 		</th>
 		"""
 	htmlDataRows: [
-		"""
+			"""
 		<tr>
 		\(strings.Join([ "	<td>\(cell)</td>" for cell in row ], "\n"))
 		</tr>
 		"""
-		for row in dataRows
+			for row in dataRows
 	]
 	htmlRows: [htmlHeaderRow] + htmlDataRows
 	html:     """
