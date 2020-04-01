@@ -6,16 +6,16 @@ package main
 env: prReview: {
 
 	output: {
-		for prID, d in block.deployment {
+		for prID, d in config.deployment {
 			"PR \(prID) web": d.webUrl
 			"PR \(prID) API": d.apiUrl
 		}
 	}
 
-	block: {
+	config: {
 		// Deploy a complete dev stack from each pull request,
 		// for review and integration testing.
-		for prID, pr in env.devInfra.block.monorepo.pr {
+		for prID, pr in env.devInfra.config.monorepo.pr {
 			"\(prID)": env.devInfra.Deployment & {
 				name:   "pr\(prID)"
 				source: pr.branch.tip.checkout
