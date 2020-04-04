@@ -39,7 +39,7 @@ Site :: {
 	online: bool | *true
 
 	deploy: bl.BashScript & {
-		policy: "always"
+		runPolicy: "always"
 
 		workdir: "/site/contents"
 		input: "/site/contents": contents

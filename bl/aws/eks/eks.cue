@@ -29,7 +29,7 @@ Deployment :: {
 
 	online: bool | *true
 	deploy: task & {
-		policy: "always"
+		runPolicy: "always"
 
 		input: {
 			"/kube/config.yaml": kubeConfigYAML
