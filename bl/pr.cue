@@ -6,9 +6,9 @@ package main
 env: prReview: {
 
 	output: {
-		for prID, d in config.deployment {
-			"PR \(prID) web": d.webUrl
-			"PR \(prID) API": d.apiUrl
+		for prID, d in config {
+			"PR \(prID) web": d.web.url
+			"PR \(prID) API": d.api.url
 		}
 	}
 

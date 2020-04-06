@@ -1,9 +1,8 @@
 package main
 
 import (
-	"stackbrew.io/github"
-
 	"acme.infralabs.io/acme"
+	"acme.infralabs.io/github"
 )
 
 // Environment to manage all development infrastructure
