@@ -71,7 +71,7 @@ env: devInfra: {
 
 		// Github API token
 		// FIXME
-		// githubToken: secret
+		githubToken: secret
 
 		// Owner of the github repo
 		githubRepoOwner: string | *"blocklayerhq"
@@ -81,27 +81,26 @@ env: devInfra: {
 
 		// Queue of inbound github events
 		// FIXME: not yet implemented in the github package
-		// githubEvents: stream & {
-		// receive: github.Event
-		// }
+		// FIXME: for now we just keep the last event
+		githubEvents: {
+			...
+		}
 	}
 
 	config: {
+
 		monorepo: github.Repository & {
 			// token: input.githubToken
 			// FIXME
-			token: secret & {value: "FIXME"}
+			token: input.githubToken
 			owner: input.githubRepoOwner
 			name:  input.githubRepoName
 		}
 
+
 		// FIXME: automate infrastructure provisioning
 		// Currently it is done out-of-band (terraform for API,
 		// manually for frontend).
-
-		test: {
-			region: input.awsRegion
-		}
 	}
 
 	// A full deployment of the ACME stack on the dev infra
