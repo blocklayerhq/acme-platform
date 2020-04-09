@@ -1,4 +1,4 @@
-package api
+package webhook
 
 // Raw data structures from Github API
 // https://developer.github.com/v3/activity/events/types/#pullrequestevent

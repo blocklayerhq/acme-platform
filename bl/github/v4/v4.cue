@@ -1,4 +1,4 @@
-package api
+package v4
 
 import (
 	"b.l/bl"
@@ -24,14 +24,14 @@ ListPullRequests :: {
 		token: endpoint.token
 		query:
 			"""
-		repository(owner: "\(repoOwner)", name: "\(repoName)") {
-			pullRequests(last:\(pageSize), states: OPEN) {
-				nodes {
-					number
-					title
+			repository(owner: "\(repoOwner)", name: "\(repoName)") {
+				pullRequests(last:\(pageSize), states: OPEN) {
+					nodes {
+						number
+						title
+					}
 				}
 			}
-		}
-		"""
+			"""
 	}
 }
