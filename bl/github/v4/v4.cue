@@ -11,6 +11,18 @@ Endpoint :: {
 	token: bl.Secret
 }
 
+PullRequest :: {
+	number: int
+	title: string
+	state: string
+	head: {
+		sha: string
+		ref: string
+		git_url: string
+		ssh_url: string
+	}
+}
+
 // GraphQL query to list pull requests for a repository
 ListPullRequests :: {
 	endpoint: Endpoint
@@ -21,7 +33,8 @@ ListPullRequests :: {
 
 	result: {
 		for prData in query.result.data.repository.pullRequests.nodes {
-			"\(prData.number)": {
+			"\(prData.number)": PullRequest & {
+				number: prData.number
 				title: prData.title
 				state: prData.state
 				head: {
