@@ -6,12 +6,12 @@ env: devInfra: {
 			data: repository: pullRequests: nodes: [
 				{
 					"number": 42
-					"title": "great pull request"
+					"title":  "great pull request"
 				},
 				{
 					"number": 28
-					"title": "even better pull request"
-				}
+					"title":  "even better pull request"
+				},
 			]
 		}
 	}

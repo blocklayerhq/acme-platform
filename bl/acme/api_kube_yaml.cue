@@ -80,5 +80,3 @@ metadata:
     name: api-db-config
 type: Opaque
 """
-
-

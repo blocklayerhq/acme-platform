@@ -90,13 +90,10 @@ env: devInfra: {
 	config: {
 
 		monorepo: github.Repository & {
-			// token: input.githubToken
-			// FIXME
 			token: input.githubToken
 			owner: input.githubRepoOwner
 			name:  input.githubRepoName
 		}
-
 
 		// FIXME: automate infrastructure provisioning
 		// Currently it is done out-of-band (terraform for API,

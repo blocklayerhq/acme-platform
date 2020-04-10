@@ -5,4 +5,4 @@ import (
 )
 
 directory :: bl.Directory
-secret :: bl.Secret
+secret ::    bl.Secret

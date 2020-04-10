@@ -5,7 +5,7 @@ package main
 
 env: prReview: {
 
-	monorepo=env.devInfra.config.monorepo
+	monorepo = env.devInfra.config.monorepo
 
 	output: monorepo.pr
 }

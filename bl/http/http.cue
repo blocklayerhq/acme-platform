@@ -5,19 +5,19 @@ import (
 )
 
 Request :: {
-	url: string
-	body: string | *""
+	url:    string
+	body:   string | *""
 	token?: bl.Secret
 	method: *"GET" | "POST" | "PUT" | "DELETE" | "PATH" | "HEAD"
 
 	context?: string
-    if (context & string) != _|_ {
-        send: runPolicy: "onChange"
-        send: input: "/context": context
-    }
-    if (context & string) == _|_ {
-        send: runPolicy: "always"
-    }
+	if (context & string) != _|_ {
+		send: runPolicy: "onChange"
+		send: input: "/context": context
+	}
+	if (context & string) == _|_ {
+		send: runPolicy: "always"
+	}
 	response: send.output["/response"]
 
 	send: bl.BashScript & {
@@ -28,7 +28,7 @@ Request :: {
 				"/token": token
 			}
 			"/body": body
-			"/url": url
+			"/url":  url
 		}
 		output: {
 			"/response": string
@@ -53,4 +53,3 @@ Request :: {
 			"""#
 	}
 }
-

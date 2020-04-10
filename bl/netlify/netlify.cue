@@ -4,7 +4,7 @@ import (
 	"b.l/bl"
 )
 
-secret: bl.Secret & { value: string | *"" }
+secret: bl.Secret & {value: string | *""}
 
 // A Netlify account
 Account :: {

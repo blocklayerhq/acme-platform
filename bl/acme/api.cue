@@ -18,7 +18,7 @@ API :: {
 
 	// AWS configuration shared by EKS and Aurora
 	aws: {
-		region: string
+		region:    string
 		accessKey: secret
 		secretKey: secret
 	}
@@ -43,7 +43,7 @@ API :: {
 	db: aurora.DB & {
 		// Database name
 		// (a DB is created automatically on the server for each deployment)
-		name: strings.Split(hostname, ".")[0]
+		name:      strings.Split(hostname, ".")[0]
 		awsConfig: aws
 		// FIXME: make ARNs configurable, or even better, provision them dynamically
 		arn:       "arn:aws:rds:us-west-2:125635003186:cluster:bl-demo-rds"
@@ -79,18 +79,18 @@ API :: {
 			}
 			// 4. Secret overlay (with db config for js app)
 			secret: "api-db-config": {
-				secretData=json.Marshal(js.config)
+				secretData = json.Marshal(js.config)
 				stringData: json: secretData
 			}
 		}
 
 		// Deploy the configuration on EKS cluster
 		deployment: eks.Deployment & {
-			namespace:      strings.Replace(hostname, ".", "-", -1)
+			namespace: strings.Replace(hostname, ".", "-", -1)
 			// FIXME: for now we only pass the raw yaml string without values inserted
-			kubeConfig: config
+			kubeConfig:     config
 			kubeAuthConfig: auth
-			awsConfig: aws
+			awsConfig:      aws
 		}
 
 	}

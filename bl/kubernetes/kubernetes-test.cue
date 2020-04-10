@@ -1,6 +1,6 @@
 package kubernetes
 
-test: simpleLoad : Load & {
+test: simpleLoad: Load & {
 	input: [{
 		kind: "deployment"
 		metadata: name: "foo"
