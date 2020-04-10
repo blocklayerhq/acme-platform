@@ -23,23 +23,5 @@ Repository :: {
 		repoName:  name
 	}
 
-	// Pull requests mapped by ID
-	pr: {
-		allPrData = Pull.pr.result.data.repository.pullRequests.nodes
-		if (allPrData & []) != _|_ {
-			for prData in allPrData {
-				"\(prData.number)": {
-					title: prData.title
-
-					state: "FIXME"
-					head: {
-						sha:     "FIXME"
-						ref:     "FIXME"
-						git_url: "FIXME"
-						ssh_url: "FIXME"
-					}
-				}
-			}
-		}
-	}
+	pr: Pull.pr.result
 }

@@ -14,7 +14,7 @@ Query :: {
 	// We also remove tabs, just in case.
 	queryOneLiner = strings.Replace(strings.Replace(query, "\n", " ", -1), "\t", " ", -1)
 
-	result: _ | *null
+	result: {...}
 
 	// Raw HTTP response
 	response: _
