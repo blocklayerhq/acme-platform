@@ -3,6 +3,7 @@ package main
 import (
 	"acme.infralabs.io/acme"
 	"acme.infralabs.io/github"
+	"acme.infralabs.io/github/webhook"
 )
 
 // Environment to manage all development infrastructure
@@ -70,7 +71,6 @@ env: devInfra: {
 		/////////////////
 
 		// Github API token
-		// FIXME
 		githubToken: secret
 
 		// Owner of the github repo
@@ -82,9 +82,7 @@ env: devInfra: {
 		// Queue of inbound github events
 		// FIXME: not yet implemented in the github package
 		// FIXME: for now we just keep the last event
-		githubEvents: {
-			...
-		}
+		githubEvents: webhook.Event
 	}
 
 	config: {
@@ -93,6 +91,7 @@ env: devInfra: {
 			token: input.githubToken
 			owner: input.githubRepoOwner
 			name:  input.githubRepoName
+			lastEvent: input.githubEvents
 		}
 
 		// FIXME: automate infrastructure provisioning
