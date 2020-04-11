@@ -17,7 +17,7 @@ Repository :: {
 	owner: string
 
 	lastEvent?: webhook.Event
-	lastPRnumber?: int
+	lastPRnumber: int | *0
 	if (lastEvent.pull_request.number & int) != _|_ {
 		lastPRnumber: lastEvent.pull_request.number
 	}
