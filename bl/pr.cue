@@ -5,17 +5,17 @@ package main
 
 env: prReview: {
 
-	monorepo=env.devInfra.config.monorepo
+	monorepo = env.devInfra.config.monorepo
 	lastPRnumber: monorepo.lastPRnumber
 
 	deployLast: env.devInfra.Deployment & {
-		name: "pr-\(lastPRnumber)"
+		name:   "pr-\(lastPRnumber)"
 		source: env.staging.input.source
 	}
 
 	output: {
 		"\(lastPRnumber)": {
-			url: deployLast.web.url
+			url:     deployLast.web.url
 			api_url: deployLast.api.url
 		}
 	}

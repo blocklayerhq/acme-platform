@@ -6,14 +6,14 @@ import (
 )
 
 BulkPushAcme :: BulkPush & {
-	domain: "acme.infralabs.io"
-	envName: "devInfra"
+	domain:    "acme.infralabs.io"
+	envName:   "devInfra"
 	draftName: "acme-bootstrap"
 }
 
 BulkPush :: {
-	envName: string
-	domain: string
+	envName:   string
+	domain:    string
 	draftName: string
 
 	pushCommands: {
@@ -46,14 +46,14 @@ BulkPush :: {
 			set -o errexit -o xtrace
 			bl draft rm '\(draftName)' 2>/dev/null || true
 			bl draft init '\(draftName)'
-			\(strings.Join([cmd for _, cmd in pushCommands], "\n"))
+			\(strings.Join([ cmd for _, cmd in pushCommands ], "\n"))
 		)
 		"""
 }
 
 RunLocal :: {
 	envName: string
-	output: string | *"localhost:5001/bl-debug-output"
+	output:  string | *"localhost:5001/bl-debug-output"
 
 	inputFlags: {
 		for key, value in env[envName].input {
@@ -69,7 +69,7 @@ RunLocal :: {
 		(
 			set -o xtrace -o errexit
 			bl-runtime run -t '\#(output)' \
-			\#(strings.Join(["	\(flags)" for _, flags in inputFlags], "\\\n"))
+			\#(strings.Join([ "	\(flags)" for _, flags in inputFlags ], "\\\n"))
 		)
 		"""#
 }

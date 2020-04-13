@@ -88,9 +88,9 @@ env: devInfra: {
 	config: {
 
 		monorepo: github.Repository & {
-			token: input.githubToken
-			owner: input.githubRepoOwner
-			name:  input.githubRepoName
+			token:     input.githubToken
+			owner:     input.githubRepoOwner
+			name:      input.githubRepoName
 			lastEvent: input.githubEvents
 		}
 
