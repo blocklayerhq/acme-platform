@@ -16,10 +16,10 @@ Frontend :: {
 	apiHostname: string
 
 	// Frontend source code to deploy
-	src=source: directory
+	source: directory
 
 	jsApp: yarn.App & {
-		source:       src
+		"source":     source
 		writeEnvFile: ".env"
 		loadEnv:      false
 		environment: {
