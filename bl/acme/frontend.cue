@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"stackbrew.io/yarn"
-	"acme.infralabs.io/netlify"
+	"stackbrew.io/netlify"
 )
 
 // Web frontend of an ACME clothing app
@@ -24,7 +24,7 @@ Frontend :: {
 		loadEnv:      false
 		environment: {
 			NODE_ENV:    "production"
-			APP_URL:     url
+			APP_URL:     "https://\(hostname)"
 			APP_URL_API: "https://\(apiHostname)"
 		}
 		buildDirectory: "public"
@@ -44,5 +44,5 @@ Frontend :: {
 		domain:   hostname
 	}
 
-	url: "https://\(hostname)"
+	url: site.url
 }
