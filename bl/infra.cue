@@ -2,8 +2,7 @@ package main
 
 import (
 	"acme.infralabs.io/acme"
-	"acme.infralabs.io/github"
-	"acme.infralabs.io/github/webhook"
+	"stackbrew.io/github"
 )
 
 // Environment to manage all development infrastructure
@@ -82,16 +81,15 @@ env: devInfra: {
 		// Queue of inbound github events
 		// FIXME: not yet implemented in the github package
 		// FIXME: for now we just keep the last event
-		githubEvents: webhook.Event
+		githubEvents: github.Event
 	}
 
 	config: {
 
 		monorepo: github.Repository & {
-			token:     input.githubToken
-			owner:     input.githubRepoOwner
-			name:      input.githubRepoName
-			lastEvent: input.githubEvents
+			token: input.githubToken
+			owner: input.githubRepoOwner
+			name:  input.githubRepoName
 		}
 
 		// FIXME: automate infrastructure provisioning
@@ -111,11 +109,10 @@ env: devInfra: {
 
 		web: {
 			hostname: string | *"\(name).\(input.webDomain)"
-			site: account: {
+			netlifyAccount: {
 				name:  input.netlifyTeam
 				token: input.netlifyToken
 			}
-			site: online: (input.online == "1")
 		}
 		api: {
 			hostname: string | *"\(name).\(input.apiDomain)"
